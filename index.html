@@ -3,116 +3,189 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#120f0d">
 <title>실시간 착용 거울</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Serif+KR:wght@300;500&family=Noto+Sans+KR:wght@300;400;500&display=swap">
 <style>
+/* Layout: 휴대폰은 카메라가 화면 전체, 위에 카메라 앱처럼 컨트롤을 얹고 설정은 아래 시트로. PC는 왼쪽 거울, 오른쪽 상아색 시트. */
 :root{
-  --bg:#eceeeb; --surface:#fbfbfa; --surface-2:#e2e6e2; --fg:#1c2321; --muted:#5b6662; --line:#cdd3cf;
-  --accent:#94661c; --accent-soft:#f1e5cf; --accent-fg:#fff; --stage:#1a2221; --danger:#b3261e;
-  --f-display:"Gowun Batang","Nanum Myeongjo",serif;
-  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --ink:#120f0d; --ink-2:#1c1815; --ink-3:#2a2420;
+  --ivory:#f4efe6; --ivory-2:#e9e1d3; --sand:#b9ab95; --muted:#8c8070;
+  --gold:#c6a66b; --gold-hi:#e3cb97; --gold-lo:#8e7445;
+  --line:rgba(198,166,107,.28); --line-soft:rgba(244,239,230,.10);
+  --f-serif:"Noto Serif KR","Nanum Myeongjo",serif;
+  --f-latin:"Cormorant Garamond","Times New Roman",serif;
+  --f-sans:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root{
-  --bg:#131817; --surface:#1b2220; --surface-2:#242d2b; --fg:#e5eae7; --muted:#9aa6a1; --line:#33403c;
-  --accent:#d6a650; --accent-soft:#3a2f1b; --accent-fg:#1a1306; --stage:#0d1312; --danger:#f08077; color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-body);padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0)}
-.wrap{max-width:1180px;margin:0 auto;padding-block:16px 40px;display:flex;flex-direction:column;gap:14px}
-h1{font-family:var(--f-display);font-size:clamp(22px,4vw,30px);margin:0}
-.top p{margin:4px 0 0;color:var(--muted);font-size:14px}
-.layout{display:grid;gap:14px;grid-template-columns:1fr}
-@media (min-width:900px){.layout{grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr)}}
-.stage{position:relative;background:var(--stage);border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-width:100%;display:grid;place-items:center}
-.stage canvas{width:100%;height:100%;object-fit:contain;display:block}
-.msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8efec;text-align:center;font-size:15px;padding:16px;max-width:90%}
-.fps{position:absolute;right:10px;bottom:8px;font-size:11px;color:#fff;background:rgb(0 0 0/.4);padding:2px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
-.badge{position:absolute;top:10px;left:10px;font-size:12px;background:rgb(0 0 0/.5);color:#fff;padding:4px 10px;border-radius:999px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
-.seg{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:2px;flex-wrap:wrap}
-.seg button{flex:1;border:0;background:transparent;color:var(--muted);font:600 14px var(--f-body);padding:8px 10px;border-radius:999px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgb(0 0 0/.12)}
-.row{display:flex;flex-wrap:wrap;gap:8px}
-.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:9px 13px;font:500 14px var(--f-body);cursor:pointer}
-.btn:hover{border-color:var(--accent)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label,.lbl{font-size:12px;color:var(--muted);font-weight:500}
-input[type=range]{width:100%;accent-color:var(--accent)}
-input[type=number],textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
-input[type=number]{width:100px}
-textarea{width:100%;min-height:90px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
-.sliders{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
-h2{font-size:14px;margin:0;font-weight:600}
-.note{font-size:13px;color:var(--muted);margin:0}
-.summary{font-size:13px;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
-button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.ana-chips{display:flex;flex-wrap:wrap;gap:6px}
-.ana-chips span{font-size:12px;background:var(--accent-soft);border-radius:999px;padding:3px 10px}
-.ana-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:420px){.ana-cards{grid-template-columns:1fr}}
-.ana-card{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;font-size:13px;min-width:0}
-.ana-mats{display:flex;flex-wrap:wrap;gap:4px}
-.ana-mat{width:28px;height:28px;border-radius:6px;background:var(--stage);display:grid;place-items:center;padding:3px}
+html,body{margin:0;height:100%}
+body{background:var(--ink);color:var(--ivory);font:300 15px/1.65 var(--f-sans);letter-spacing:-.005em;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:1px solid var(--gold-hi);outline-offset:3px}
+.app{min-height:100%;display:grid;grid-template-columns:1fr}
+@media (min-width:960px){.app{grid-template-columns:minmax(0,1fr) 400px;height:100vh;overflow:hidden}}
+
+/* ---- 거울 ---- */
+.mirror{position:relative;background:#000;height:100svh;overflow:hidden}
+@media (min-width:960px){.mirror{height:100vh}}
+.stage{position:absolute;inset:0;aspect-ratio:auto!important;display:grid;place-items:center}
+.stage canvas{width:100%;height:100%;object-fit:cover;display:block}
+@media (min-width:960px){.stage canvas{object-fit:contain}}
+.veil{position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(180deg,rgba(18,15,13,.72) 0%,rgba(18,15,13,0) 22%,rgba(18,15,13,0) 62%,rgba(18,15,13,.86) 100%)}
+.brand{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px) + 18px) 22px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.brand .eyebrow{font:500 11px/1 var(--f-latin);letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
+.brand h1{margin:8px 0 0;font:300 22px/1.2 var(--f-serif);letter-spacing:.04em;color:var(--ivory)}
+.fps{font:400 12px/1 var(--f-latin);letter-spacing:.12em;color:var(--sand);padding-top:2px;font-variant-numeric:tabular-nums}
+.badge{position:absolute;top:calc(env(safe-area-inset-top,0px) + 86px);left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:.04em;color:var(--ivory);
+  background:rgba(18,15,13,.55);border:1px solid var(--line);padding:6px 14px;border-radius:999px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);white-space:nowrap}
+.msg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(320px,82%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+.msg p{margin:0;font:300 14px/1.8 var(--f-sans);color:var(--ivory-2)}
+.msg .orn{width:54px;height:54px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--gold)}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:0 18px calc(env(safe-area-inset-bottom,0px) + 18px);display:flex;flex-direction:column;align-items:center;gap:18px}
+.tabs{display:flex;gap:2px;justify-content:center}
+.tabs button{border:0;background:none;cursor:pointer;padding:8px 12px;font:400 14px/1 var(--f-serif);letter-spacing:.12em;color:var(--sand);position:relative;transition:color .25s}
+.tabs button::after{content:"";position:absolute;left:50%;bottom:0;width:4px;height:4px;border-radius:50%;background:var(--gold);transform:translateX(-50%) scale(0);transition:transform .25s}
+.tabs button[aria-pressed="true"]{color:var(--ivory)}
+.tabs button[aria-pressed="true"]::after{transform:translateX(-50%) scale(1)}
+.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;width:min(360px,100%)}
+.ctl{justify-self:center;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:rgba(18,15,13,.42);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:grid;place-items:center;cursor:pointer;color:var(--ivory);transition:border-color .2s,transform .2s}
+.ctl:hover:not(:disabled){border-color:var(--gold)}
+.ctl:disabled{opacity:.32;cursor:default}
+.ctl svg{width:20px;height:20px}
+.shutter{width:74px;height:74px;border-radius:50%;border:1.5px solid var(--gold-hi);background:none;padding:5px;cursor:pointer;transition:transform .15s}
+.shutter span{display:block;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8ea,#e8d6ae 55%,#b8955a)}
+.shutter:active:not(:disabled){transform:scale(.94)}
+.shutter:disabled{opacity:.35;cursor:default}
+.cam-cta{border:1px solid var(--gold);background:linear-gradient(180deg,rgba(198,166,107,.16),rgba(198,166,107,.04));color:var(--gold-hi);
+  font:400 14px/1 var(--f-serif);letter-spacing:.24em;padding:15px 30px;border-radius:999px;cursor:pointer;transition:background .25s}
+.cam-cta:hover{background:rgba(198,166,107,.22)}
+.cam-cta.off{border-color:var(--line-soft);color:var(--sand);background:rgba(18,15,13,.4);font-size:12px;padding:9px 18px;letter-spacing:.18em}
+.guide{margin:0;text-align:center;font-size:12.5px;color:var(--ivory-2);opacity:.82;max-width:340px;line-height:1.6}
+
+/* ---- 시트 ---- */
+.sheet{background:var(--ivory);color:#2a2420;display:flex;flex-direction:column}
+@media (min-width:960px){.sheet{height:100vh;overflow-y:auto;border-left:1px solid #d9cfbf}}
+.sheet-in{padding:30px 24px calc(env(safe-area-inset-bottom,0px) + 36px);display:flex;flex-direction:column;gap:30px}
+.sec{display:flex;flex-direction:column;gap:14px}
+.sec + .sec{padding-top:26px;border-top:1px solid #ddd3c3}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sec-h h2{margin:0;font:500 17px/1.3 var(--f-serif);letter-spacing:.06em;color:#1f1a16}
+.sec-h .no{font:italic 400 15px/1 var(--f-latin);color:var(--gold-lo);letter-spacing:.06em}
+.lede{margin:0;font-size:13.5px;color:#6f6456;line-height:1.75}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
+.field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.field label{font:400 12px/1 var(--f-sans);letter-spacing:.1em;color:#7b6f60}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:none;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:#cbbfab}
+input[type=range]::-moz-range-track{height:1px;background:#cbbfab}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-7px;border-radius:50%;background:var(--ivory);border:1px solid var(--gold-lo);box-shadow:0 1px 3px rgba(60,40,10,.25)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--ivory);border:1px solid var(--gold-lo)}
+input[type=number],textarea{font:300 14px/1.5 var(--f-sans);color:#2a2420;background:#fbf8f2;border:1px solid #d8ccba;border-radius:2px;padding:10px 12px}
+input[type=number]{width:110px}
+textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menlo,monospace;resize:vertical}
+.btn{border:1px solid #cbbda5;background:transparent;color:#2a2420;border-radius:999px;padding:11px 20px;font:400 13px/1 var(--f-sans);letter-spacing:.12em;cursor:pointer;transition:all .2s}
+.btn:hover:not(:disabled){border-color:var(--gold-lo);color:#1f1a16}
+.btn.primary{background:#1f1a16;border-color:#1f1a16;color:var(--gold-hi)}
+.btn.primary:hover:not(:disabled){background:#2e2620}
+.btn:disabled{opacity:.4;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.summary{font:400 13px/1.6 var(--f-sans);color:#4c4237;padding:12px 14px;border:1px solid #ddd2c0;background:#faf6ee;border-radius:2px}
+.note{margin:0;font-size:12.5px;color:#7b6f60;line-height:1.7}
+.note b{font-weight:500;color:#3d342b}
+
+/* ---- AI 결과 ---- */
+#anaOut{display:flex;flex-direction:column;gap:14px}
+#anaOut:empty{display:none}
+.ana-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ana-chips span{font-size:12px;letter-spacing:.04em;border:1px solid #d5c6ad;color:#4c4237;border-radius:999px;padding:5px 12px;background:#fbf8f2}
+.ana-chips b{font-weight:500;color:var(--gold-lo);margin-right:4px}
+.ana-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:400px){.ana-cards{grid-template-columns:1fr}}
+.ana-card{background:#1f1a16;color:var(--ivory);border-radius:2px;padding:16px 14px;display:flex;flex-direction:column;gap:12px;font-size:13px;min-width:0}
+.ana-card b{font:500 14px/1.3 var(--f-serif);letter-spacing:.06em;color:var(--gold-hi)}
+.ana-card .btn.primary{background:transparent;border-color:var(--gold);color:var(--gold-hi);padding:10px 12px;font-size:12px;margin-top:auto}
+.ana-mats{display:flex;flex-wrap:wrap;gap:6px}
+.ana-mat{width:30px;height:30px;border-radius:50%;background:#2e2722;display:grid;place-items:center;padding:4px;border:1px solid rgba(198,166,107,.25)}
 .ana-mat img{max-width:100%;max-height:100%}
-.ana-mat i{display:block;width:70%;height:70%;border-radius:50%}
-#anaOut{display:flex;flex-direction:column;gap:8px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
+.ana-mat i{display:block;width:72%;height:72%;border-radius:50%}
+
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 84px);transform:translateX(-50%);background:rgba(18,15,13,.88);color:var(--ivory);border:1px solid var(--line);
+  padding:11px 20px;border-radius:999px;font-size:13px;letter-spacing:.03em;z-index:9;max-width:calc(100% - 32px);backdrop-filter:blur(10px)}
+.scroll-hint{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 4px);transform:translateX(-50%);font:400 10px/1 var(--f-latin);letter-spacing:.3em;color:var(--sand);opacity:.6}
+@media (min-width:960px){.scroll-hint{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <h1>실시간 착용 거울</h1>
-    <p>카메라가 얼굴·목·손을 인식해서, 디자인 보드에서 만든 장신구를 실제 크기 비율로 바로 착용해 보여줘요.</p>
-  </header>
-  <main class="layout">
-    <section>
-      <div class="stage" id="stage">
-        <canvas id="cv" width="1280" height="960"></canvas>
-        <video id="vid" playsinline muted hidden></video>
-        <span class="badge" id="badge" hidden></span>
-        <span class="fps" id="fps"></span>
-        <div class="msg" id="msg">‘카메라 켜기’를 누르면 시작해요.<br>처음에는 인식 모델을 받느라 몇 초 걸려요.</div>
-      </div>
-    </section>
-    <aside class="panel">
-      <div class="seg" id="typeSeg" role="group" aria-label="착용할 장신구">
+<div class="app">
+  <section class="mirror" aria-label="착용 거울">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="1280" height="960"></canvas>
+      <video id="vid" playsinline muted hidden></video>
+    </div>
+    <div class="veil"></div>
+    <header class="brand">
+      <div><div class="eyebrow">Live Try-On</div><h1>착용 거울</h1></div>
+      <span class="fps" id="fps"></span>
+    </header>
+    <span class="badge" id="badge" hidden></span>
+    <div class="msg" id="msg">
+      <div class="orn" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 3l3.5 4.5L12 21 8.5 7.5z"/><path d="M5 7.5h14"/></svg></div>
+      <p>카메라를 켜면 얼굴과 손을 알아보고<br>디자인한 장신구를 실제 크기로 걸어 드려요.</p>
+    </div>
+    <div class="dock">
+      <p class="guide" id="guide"></p>
+      <div class="tabs" id="typeSeg" role="group" aria-label="착용할 장신구">
         <button type="button" data-type="earring" aria-pressed="true">귀걸이</button>
         <button type="button" data-type="necklace" aria-pressed="false">목걸이</button>
         <button type="button" data-type="bracelet" aria-pressed="false">팔찌</button>
         <button type="button" data-type="ring" aria-pressed="false">반지</button>
       </div>
-      <p class="note" id="guide"></p>
-      <div class="row">
-        <button class="btn primary" type="button" id="btnCam">카메라 켜기</button>
-        <button class="btn" type="button" id="btnFlip" disabled>앞/뒤 카메라</button>
-        <button class="btn" type="button" id="btnShot" disabled>사진 찍기</button>
+      <div class="controls">
+        <button class="ctl" type="button" id="btnFlip" disabled aria-label="앞뒤 카메라 바꾸기" title="앞/뒤 카메라"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><path d="M9.5 13.5a2.8 2.8 0 0 0 5 .8M14.5 12.5a2.8 2.8 0 0 0-5-.8"/><path d="M14.6 10.4l-.1 2.1 2-.4M9.4 15.6l.1-2.1-2 .4"/></svg></button>
+        <button class="shutter" type="button" id="btnShot" disabled aria-label="사진 찍기" title="사진 찍기"><span></span></button>
+        <button class="ctl" type="button" id="btnAnalyze" disabled aria-label="얼굴 분석하고 추천 받기" title="AI 스타일 분석"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 3.5l1.6 4.9 4.9 1.6-4.9 1.6L12 16.5l-1.6-4.9L5.5 10l4.9-1.6z"/><path d="M18.5 15.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"/></svg></button>
       </div>
-      <div class="sliders">
-        <div class="field"><label for="sScale">크기</label><input type="range" id="sScale" min="0.6" max="1.6" step="0.01" value="1"></div>
-        <div class="field"><label for="sOff">위치 (위·아래)</label><input type="range" id="sOff" min="-25" max="25" step="0.5" value="0"></div>
-        <div class="field"><label for="sShd">그림자</label><input type="range" id="sShd" min="0" max="1" step="0.02" value="0.6"></div>
-        <div class="field"><label for="sAmb">조명 맞춤</label><input type="range" id="sAmb" min="0" max="1" step="0.02" value="0.7"></div>
-      </div>
-      <h2>AI 스타일 분석</h2>
-      <p class="note">카메라 앞에서 정면을 보고 누르면 피부 톤·언더톤·얼굴형을 재서, 불러온 재료 안에서 어울리는 귀걸이·목걸이 조합을 골라 줘요. 영상은 기기 밖으로 나가지 않아요.</p>
-      <button class="btn primary" type="button" id="btnAnalyze" disabled>얼굴 분석하고 추천 받기</button>
-      <div id="anaOut"></div>
-      <div class="field" id="wristField" hidden><label for="wristIn">손목 둘레 (cm)</label><input type="number" id="wristIn" min="11" max="22" step="0.5" value="15.5"></div>
-      <h2>디자인 불러오기</h2>
-      <div class="summary" id="summary"></div>
-      <p class="note">디자인 보드의 <b>저장·백업 → 전체 백업 복사</b>를 누른 뒤, 아래 칸에 붙여넣고 불러오세요. 한 번 불러오면 이 기기에 기억돼요.</p>
-      <textarea id="paste" placeholder="여기에 백업 내용을 붙여넣으세요"></textarea>
-      <div class="row">
-        <button class="btn primary" type="button" id="btnLoad">불러오기</button>
-        <button class="btn" type="button" id="btnSample">예시 디자인으로</button>
-      </div>
-    </aside>
-  </main>
+      <button class="cam-cta" type="button" id="btnCam">카메라 켜기</button>
+    </div>
+    <span class="scroll-hint" aria-hidden="true">SCROLL · 설정</span>
+  </section>
+
+  <aside class="sheet" aria-label="설정">
+    <div class="sheet-in">
+      <section class="sec">
+        <div class="sec-h"><h2>AI 스타일 분석</h2><span class="no">i.</span></div>
+        <p class="lede">정면을 보고 거울 아래의 <b>✦</b> 버튼을 누르면 피부 톤·언더톤·얼굴형을 재서, 지금 가진 재료 안에서 어울리는 귀걸이와 목걸이를 골라 드려요. 영상은 기기 밖으로 나가지 않아요.</p>
+        <div id="anaOut"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-h"><h2>착용 맞춤</h2><span class="no">ii.</span></div>
+        <div class="sliders">
+          <div class="field"><label for="sScale">크기</label><input type="range" id="sScale" min="0.6" max="1.6" step="0.01" value="1"></div>
+          <div class="field"><label for="sOff">위치 · 위아래</label><input type="range" id="sOff" min="-25" max="25" step="0.5" value="0"></div>
+          <div class="field"><label for="sShd">그림자</label><input type="range" id="sShd" min="0" max="1" step="0.02" value="0.6"></div>
+          <div class="field"><label for="sAmb">조명 맞춤</label><input type="range" id="sAmb" min="0" max="1" step="0.02" value="0.7"></div>
+        </div>
+        <div class="field" id="wristField" hidden><label for="wristIn">손목 둘레 (cm)</label><input type="number" id="wristIn" min="11" max="22" step="0.5" value="15.5"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-h"><h2>디자인 불러오기</h2><span class="no">iii.</span></div>
+        <div class="summary" id="summary"></div>
+        <p class="note">디자인 보드의 <b>저장·백업 → 전체 백업 복사</b>를 누른 뒤 아래 칸에 붙여넣고 불러오세요. 한 번 불러오면 이 기기에 기억돼요.</p>
+        <textarea id="paste" placeholder="여기에 백업 내용을 붙여넣으세요"></textarea>
+        <div class="row">
+          <button class="btn primary" type="button" id="btnLoad">불러오기</button>
+          <button class="btn" type="button" id="btnSample">예시 디자인으로</button>
+        </div>
+      </section>
+    </div>
+  </aside>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -293,23 +366,24 @@ const MOBILE=matchMedia('(pointer:coarse)').matches;
 let detMs=12, lastF=null, prevBox=null, fpsT=performance.now(), fpsN=0;
 let stream=null, facing='user', mirror=true, raf=0, lastTs=-1, smooth={}, frameNo=0, bright={}, lost=0;
 const opt={scale:1,off:0,shd:.6,amb:.7};
-function setMsg(t){ const m=$('#msg'); m.hidden=!t; if(t) m.innerHTML=t }
+function setMsg(t){ const m=$('#msg'); m.hidden=!t; if(t) m.querySelector('p').innerHTML=t }
 async function startCam(){
   stopCam();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ setMsg('이 브라우저에서는 카메라를 쓸 수 없어요.<br>크롬이나 사파리 최신 버전으로 https 주소에서 열어 주세요.'); return }
   setMsg('카메라를 켜는 중이에요…');
-  const res0 = MOBILE ? {width:{ideal:640},height:{ideal:480}} : {width:{ideal:960},height:{ideal:720}};
+  const portrait = innerHeight>innerWidth;
+  const res0 = MOBILE ? (portrait ? {width:{ideal:720},height:{ideal:960}} : {width:{ideal:960},height:{ideal:720}}) : {width:{ideal:960},height:{ideal:720}};
   try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,...res0,frameRate:{ideal:30,max:30}},audio:false}) }
   catch(e){ setMsg(e&&e.name==='NotAllowedError' ? '카메라 권한이 거부됐어요.<br>주소창의 카메라 아이콘에서 허용으로 바꾼 뒤 다시 눌러 주세요.' : '카메라를 찾지 못했어요.<br>다른 앱이 카메라를 쓰고 있는지 확인해 주세요.'); return }
   vid.srcObject=stream; await vid.play().catch(()=>{});
   mirror = facing==='user';
-  $('#btnCam').textContent='카메라 끄기'; $('#btnFlip').disabled=false; $('#btnShot').disabled=false; $('#btnAnalyze').disabled=false;
+  $('#btnCam').textContent='카메라 끄기'; $('#btnCam').classList.add('off'); $('#btnFlip').disabled=false; $('#btnShot').disabled=false; $('#btnAnalyze').disabled=false;
   setMsg('인식 모델을 불러오는 중이에요… (처음 한 번만 몇 초 걸려요)');
   getDet(KIND[type]).then(()=>{ if(stream) setMsg('') }).catch(()=>setMsg('인식 모델을 받지 못했어요.<br>인터넷 연결을 확인하고 다시 켜 주세요.'));
   cancelAnimationFrame(raf); loop();
 }
 function stopCam(){ cancelAnimationFrame(raf); if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null }
-  $('#btnCam').textContent='카메라 켜기'; $('#btnFlip').disabled=true; $('#btnShot').disabled=true; $('#btnAnalyze').disabled=true; $('#badge').hidden=true }
+  $('#btnCam').textContent='카메라 켜기'; $('#btnCam').classList.remove('off'); $('#btnFlip').disabled=true; $('#btnShot').disabled=true; $('#btnAnalyze').disabled=true; $('#badge').hidden=true }
 const lerp=(a,b,t)=>a+(b-a)*t;
 function lerpAng(a,b,t){ let d=b-a; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI; return a+d*t }
 function smoothF(key,f){ const p=smooth[key]; if(!p||Math.hypot(p.x-f.x,p.y-f.y)>f.s*80){ smooth[key]={...f}; return smooth[key] }
@@ -452,22 +526,24 @@ let lastAna=null;
 async function analyze(){
   if(!stream) return; const btn=$('#btnAnalyze'), out=$('#anaOut'); btn.disabled=true;
   out.innerHTML='<p class="note">얼굴을 재고 있어요… 1~2초만 정면을 봐 주세요.</p>';
+  const bdg=$('#badge'); bdg.hidden=false; bdg.textContent='얼굴을 재는 중이에요 · 정면을 봐 주세요';
   let fd; try{ fd=await getDet('face') }catch(e){ out.innerHTML='<p class="note">얼굴 인식 모델을 받지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; btn.disabled=false; return }
   const acc=[];
   for(let i=0;i<60&&acc.length<12;i++){ await new Promise(r=>requestAnimationFrame(r)); if(!stream||vid.readyState<2) continue;
     let ts=performance.now(); if(ts<=lastTs) ts=lastTs+1; lastTs=ts; let res; try{ res=fd.detectForVideo(vid,ts) }catch(e){ continue }
     const f=res.faceLandmarks&&res.faceLandmarks[0]; if(!f) continue; const m=measureFace(f); if(m) acc.push(m) }
   btn.disabled=!stream;
-  if(acc.length<4){ out.innerHTML='<p class="note">얼굴을 찾지 못했어요. 밝은 곳에서 얼굴 정면이 화면 가운데 오게 하고 다시 눌러 주세요.</p>'; return }
+  if(acc.length<4){ $('#badge').hidden=true; out.innerHTML='<p class="note">얼굴을 찾지 못했어요. 밝은 곳에서 얼굴 정면이 화면 가운데 오게 하고 다시 눌러 주세요.</p>'; return }
   const avg={}; for(const k of ['L','a','b','R','jaw','fore']) avg[k]=acc.reduce((s,x)=>s+x[k],0)/acc.length;
   const c=classify(avg), rec=buildRecs(c,avg.L), tip=SHAPE_TIP[c.shape], ut=UNDER_TIP[c.under];
   lastAna={c,rec};
+  $('#badge').hidden=true; toast('분석을 마쳤어요. 아래 ‘AI 스타일 분석’에서 추천을 확인하세요.'); if(MOBILE) setTimeout(()=>out.scrollIntoView({behavior:'smooth',block:'start'}),600);
   const thumbs=seq=>[...new Set(seq)].map(id=>{const m=matById(id), im=imgOf(m); return `<span class="ana-mat" title="${m.name}">${im?`<img src="${im.src}" alt="">`:`<i style="background:${colorOf(m)}"></i>`}</span>`}).join('');
   out.innerHTML=`<div class="ana-chips"><span><b>피부</b> ${c.tone}</span><span><b>언더톤</b> ${c.under}</span><span><b>얼굴형</b> ${c.shape}</span></div>
     <p class="note">${ut.metal} 금속과 ${ut.color} 계열이 잘 어울려요. ${tip.ear} 목걸이는 ${tip.neckTip}</p>
     <div class="ana-cards">
-      <div class="ana-card"><b>추천 귀걸이</b><div class="ana-mats">${thumbs(rec.ear)}</div><button class="btn primary" type="button" data-try="earring" ${rec.ear.length?'':'disabled'}>귀걸이 착용해 보기</button></div>
-      <div class="ana-card"><b>추천 목걸이 · ${rec.neckLen/10}cm</b><div class="ana-mats">${thumbs(rec.neck)}</div><button class="btn primary" type="button" data-try="necklace" ${rec.neck.length?'':'disabled'}>목걸이 착용해 보기</button></div>
+      <div class="ana-card"><b>추천 귀걸이</b><div class="ana-mats">${thumbs(rec.ear)}</div><button class="btn primary" type="button" data-try="earring" ${rec.ear.length?'':'disabled'}>착용해 보기</button></div>
+      <div class="ana-card"><b>추천 목걸이 · ${rec.neckLen/10}cm</b><div class="ana-mats">${thumbs(rec.neck)}</div><button class="btn primary" type="button" data-try="necklace" ${rec.neck.length?'':'disabled'}>착용해 보기</button></div>
     </div>
     <p class="note">조명이 노랗거나 푸르면 언더톤 결과가 달라질 수 있어요. 자연광에서 재면 가장 정확해요. 착용해 보기를 누르면 이 기기에 저장된 해당 디자인이 추천 조합으로 바뀌어요.</p>`;
 }
@@ -502,7 +578,7 @@ $('#btnSample').onclick=()=>{ D=sampleState(); try{localStorage.removeItem(STORE
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&stream){ stopCam(); setMsg('화면을 벗어나서 카메라를 껐어요.<br>‘카메라 켜기’로 다시 시작하세요.') } });
 setType('earring'); summary();
 // 대기 화면
-(function idle(){ ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--stage')||'#1a2221'; ctx.fillRect(0,0,cv.width,cv.height) })();
+(function idle(){ ctx.fillStyle='#0b0908'; ctx.fillRect(0,0,cv.width,cv.height) })();
 </script>
 </body>
 </html>
