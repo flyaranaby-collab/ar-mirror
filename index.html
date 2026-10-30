@@ -28,6 +28,7 @@ h1{font-family:var(--f-display);font-size:clamp(22px,4vw,30px);margin:0}
 .stage{position:relative;background:var(--stage);border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-width:100%;display:grid;place-items:center}
 .stage canvas{width:100%;height:100%;object-fit:contain;display:block}
 .msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8efec;text-align:center;font-size:15px;padding:16px;max-width:90%}
+.fps{position:absolute;right:10px;bottom:8px;font-size:11px;color:#fff;background:rgb(0 0 0/.4);padding:2px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
 .badge{position:absolute;top:10px;left:10px;font-size:12px;background:rgb(0 0 0/.5);color:#fff;padding:4px 10px;border-radius:999px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
 .seg{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:2px;flex-wrap:wrap}
@@ -74,6 +75,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
         <canvas id="cv" width="1280" height="960"></canvas>
         <video id="vid" playsinline muted hidden></video>
         <span class="badge" id="badge" hidden></span>
+        <span class="fps" id="fps"></span>
         <div class="msg" id="msg">‘카메라 켜기’를 누르면 시작해요.<br>처음에는 인식 모델을 받느라 몇 초 걸려요.</div>
       </div>
     </section>
@@ -284,7 +286,11 @@ async function getDet(kind){
 }
 
 /* ---------- 카메라 ---------- */
-const vid=$('#vid'), cv=$('#cv'), ctx=cv.getContext('2d',{willReadFrequently:true});
+const vid=$('#vid'), cv=$('#cv'), ctx=cv.getContext('2d',{alpha:false, desynchronized:true});
+const jl=document.createElement('canvas'), jx=jl.getContext('2d');
+const lightC=document.createElement('canvas'), lightX=lightC.getContext('2d',{willReadFrequently:true}); lightC.width=96; lightC.height=72;
+const MOBILE=matchMedia('(pointer:coarse)').matches;
+let detMs=12, lastF=null, prevBox=null, fpsT=performance.now(), fpsN=0;
 let stream=null, facing='user', mirror=true, raf=0, lastTs=-1, smooth={}, frameNo=0, bright={}, lost=0;
 const opt={scale:1,off:0,shd:.6,amb:.7};
 function setMsg(t){ const m=$('#msg'); m.hidden=!t; if(t) m.innerHTML=t }
@@ -292,7 +298,8 @@ async function startCam(){
   stopCam();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ setMsg('이 브라우저에서는 카메라를 쓸 수 없어요.<br>크롬이나 사파리 최신 버전으로 https 주소에서 열어 주세요.'); return }
   setMsg('카메라를 켜는 중이에요…');
-  try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:960}},audio:false}) }
+  const res0 = MOBILE ? {width:{ideal:640},height:{ideal:480}} : {width:{ideal:960},height:{ideal:720}};
+  try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,...res0,frameRate:{ideal:30,max:30}},audio:false}) }
   catch(e){ setMsg(e&&e.name==='NotAllowedError' ? '카메라 권한이 거부됐어요.<br>주소창의 카메라 아이콘에서 허용으로 바꾼 뒤 다시 눌러 주세요.' : '카메라를 찾지 못했어요.<br>다른 앱이 카메라를 쓰고 있는지 확인해 주세요.'); return }
   vid.srcObject=stream; await vid.play().catch(()=>{});
   mirror = facing==='user';
@@ -307,8 +314,9 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 function lerpAng(a,b,t){ let d=b-a; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI; return a+d*t }
 function smoothF(key,f){ const p=smooth[key]; if(!p||Math.hypot(p.x-f.x,p.y-f.y)>f.s*80){ smooth[key]={...f}; return smooth[key] }
   const k=.5; p.x=lerp(p.x,f.x,k); p.y=lerp(p.y,f.y,k); p.s=lerp(p.s,f.s,k); p.ang=lerpAng(p.ang,f.ang,k); p.vis=f.vis; return p }
-function lumAt(x,y,r){ try{ const R=Math.max(4,Math.round(r)), d=ctx.getImageData(Math.round(x-R),Math.round(y-R),2*R,2*R).data; let s=0,n=0;
-  for(let i=0;i<d.length;i+=16){ s+=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])/255; n++ } return n?s/n:.6 }catch(e){ return .6 } }
+function lumAt(x,y,r){ try{ const W=vid.videoWidth, H=vid.videoHeight, k=lightC.width/W; lightX.drawImage(vid,0,0,lightC.width,lightC.height);
+  const vx=(mirror?W-x:x)*k, vy=y*k, R=Math.max(2,Math.round(r*k)), d=lightX.getImageData(Math.max(0,Math.round(vx-R)),Math.max(0,Math.round(vy-R)),2*R,2*R).data; let s=0,n=0;
+  for(let i=0;i<d.length;i+=4){ s+=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])/255; n++ } return n?s/n:.6 }catch(e){ return .6 } }
 function frames(res,W,H){
   const P=(lm)=>({x:(mirror?1-lm.x:lm.x)*W, y:lm.y*H, v:lm.visibility==null?1:lm.visibility});
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -329,29 +337,51 @@ function frames(res,W,H){
     return [{key:'b', x:p0.x-dir.x*back*s, y:p0.y-dir.y*back*s, ang:Math.atan2(dir.y,dir.x), s, vis:true}] }
   const dl=dist(p14,p13)||1, dir={x:(p14.x-p13.x)/dl,y:(p14.y-p13.y)/dl};
   return [{key:'r', x:p13.x+(p14.x-p13.x)*.4+dir.x*opt.off*s, y:p13.y+(p14.y-p13.y)*.4+dir.y*opt.off*s, ang:Math.atan2(dir.y,dir.x), s, vis:true}] }
+function reach(f){ if(type==='necklace') return 230*f.s; if(type==='earring') return (items('earring').U+30)*f.s; const g=aroundGeom(type); return (g.L/(2*Math.PI)+16)*f.s }
 function loop(){
   raf=requestAnimationFrame(loop);
   if(!stream||vid.readyState<2) return;
   const W=vid.videoWidth, H=vid.videoHeight; if(!W) return;
-  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; $('#stage').style.aspectRatio=W+'/'+H }
-  ctx.setTransform(1,0,0,1,0,0); ctx.filter='none';
+  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; jl.width=W; jl.height=H; prevBox=null; $('#stage').style.aspectRatio=W+'/'+H }
+  ctx.setTransform(1,0,0,1,0,0); ctx.filter='none'; ctx.shadowColor='transparent';
   if(mirror){ ctx.translate(W,0); ctx.scale(-1,1) } ctx.drawImage(vid,0,0,W,H); ctx.setTransform(1,0,0,1,0,0);
+  fpsN++; const now=performance.now(); if(now-fpsT>1000){ const el=$('#fps'); if(el) el.textContent=Math.round(fpsN*1000/(now-fpsT))+' fps'; fpsN=0; fpsT=now }
   const d=det[KIND[type]]; if(!d) return;
-  let ts=performance.now(); if(ts<=lastTs) ts=lastTs+1; lastTs=ts;
-  let res; try{ res=d.detectForVideo(vid,ts) }catch(e){ return }
-  const F=frames(res,W,H); frameNo++;
+  frameNo++;
+  const every = detMs>34 ? 3 : detMs>18 ? 2 : 1;
+  let F=lastF;
+  if(frameNo%every===0 || !lastF){
+    let ts=performance.now(); if(ts<=lastTs) ts=lastTs+1; lastTs=ts;
+    const t0=performance.now(); let res; try{ res=d.detectForVideo(vid,ts) }catch(e){ return }
+    detMs=detMs*.8+(performance.now()-t0)*.2;
+    F=frames(res,W,H); lastF=F;
+  }
   const badge=$('#badge');
   if(!F){ lost++; if(lost>12){ badge.hidden=false; badge.textContent=type==='necklace'?'어깨와 얼굴이 보이게 해 주세요':type==='earring'?'얼굴을 찾고 있어요':'손을 찾고 있어요' } return }
   lost=0; badge.hidden=true;
+  // 장신구는 별도 레이어에 그린 뒤 그림자·밝기를 한 번에 입혀 합친다
+  if(prevBox) jx.clearRect(prevBox.x,prevBox.y,prevBox.w,prevBox.h);
+  let x0=W,y0=H,x1=0,y1=0,bs=0,bn=0;
   for(const f0 of F){ const f=smoothF(f0.key,f0); if(!f0.vis) continue;
-    if(frameNo%10===1||bright[f.key]==null){ const l=lumAt(f.x,f.y,f.s*10); bright[f.key]=l }
-    const b=1+opt.amb*(Math.max(.5,Math.min(1.35,bright[f.key]/.6))-1);
-    const o={shadow:opt.shd, bright:b}, px=f.s;
-    ctx.save(); ctx.translate(f.x,f.y); ctx.rotate(f.ang); ctx.scale(f.s,f.s);
-    if(type==='earring') drawEarring(ctx,px,o);
-    else if(type==='necklace'){ ctx.translate(0,18); drawNecklace(ctx,px,o) }
-    else drawAround(ctx,type,px,o);
-    ctx.restore() }
+    if(frameNo%15===1||bright[f.key]==null) bright[f.key]=lumAt(f.x,f.y,f.s*10);
+    bs+=bright[f.key]; bn++;
+    const r=reach(f); x0=Math.min(x0,f.x-r); y0=Math.min(y0,f.y-r); x1=Math.max(x1,f.x+r); y1=Math.max(y1,f.y+r*1.3);
+    jx.save(); jx.translate(f.x,f.y); jx.rotate(f.ang); jx.scale(f.s,f.s);
+    const o={shadow:0, bright:1};
+    if(type==='earring') drawEarring(jx,f.s,o);
+    else if(type==='necklace'){ jx.translate(0,18); drawNecklace(jx,f.s,o) }
+    else drawAround(jx,type,f.s,o);
+    jx.restore() }
+  if(!bn){ prevBox=null; return }
+  const box={x:Math.max(0,Math.floor(x0)), y:Math.max(0,Math.floor(y0))}; box.w=Math.min(W,Math.ceil(x1))-box.x; box.h=Math.min(H,Math.ceil(y1))-box.y;
+  if(box.w<=0||box.h<=0){ prevBox=null; return }
+  const b=1+opt.amb*(Math.max(.5,Math.min(1.35,(bs/bn)/.6))-1), sc=F[0].s;
+  ctx.save();
+  if(Math.abs(b-1)>.03) ctx.filter=`brightness(${b.toFixed(2)})`;
+  if(opt.shd>0){ ctx.shadowColor=`rgba(40,22,12,${(.55*opt.shd).toFixed(2)})`; ctx.shadowBlur=Math.min(14,(1.2+2*opt.shd)*sc); ctx.shadowOffsetY=(.5+1.3*opt.shd)*sc }
+  ctx.drawImage(jl,box.x,box.y,box.w,box.h,box.x,box.y,box.w,box.h);
+  ctx.restore();
+  prevBox={x:Math.max(0,box.x-2),y:Math.max(0,box.y-2),w:box.w+4,h:box.h+4};
 }
 
 /* ---------- AI 스타일 분석 (기기 안에서 계산) ---------- */
@@ -449,7 +479,7 @@ $('#anaOut').addEventListener('click',e=>{ const b=e.target.closest('[data-try]'
 
 /* ---------- 화면 조작 ---------- */
 let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,3200) }
-function setType(t){ type=t; smooth={}; bright={};
+function setType(t){ type=t; smooth={}; bright={}; lastF=null; if(prevBox){ jx.clearRect(0,0,jl.width,jl.height); prevBox=null }
   document.querySelectorAll('#typeSeg [data-type]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.type===t));
   $('#guide').textContent=GUIDE[t]; $('#wristField').hidden=t!=='bracelet';
   if(stream&&!det[KIND[t]]){ setMsg('인식 모델을 불러오는 중이에요…'); getDet(KIND[t]).then(()=>setMsg('')).catch(()=>setMsg('인식 모델을 받지 못했어요. 인터넷 연결을 확인해 주세요.')) } }
