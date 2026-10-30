@@ -33,8 +33,10 @@ button{font:inherit;color:inherit}
 .mirror{position:relative;background:#000;height:100svh;overflow:hidden}
 @media (min-width:960px){.mirror{height:100vh}}
 .stage{position:absolute;inset:0;aspect-ratio:auto!important;display:grid;place-items:center}
-.stage canvas{width:100%;height:100%;object-fit:cover;display:block}
-@media (min-width:960px){.stage canvas{object-fit:contain}}
+.stage canvas{width:100%;height:100%;object-fit:contain;object-position:50% 38%;display:block}
+.mirror.fill .stage canvas{object-fit:cover}
+.fitbtn{border:1px solid var(--line);background:rgba(18,15,13,.45);color:var(--ivory-2);font:400 11px/1 var(--f-sans);letter-spacing:.1em;padding:7px 11px;border-radius:999px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.brand .right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .veil{position:absolute;inset:0;pointer-events:none;background:
   linear-gradient(180deg,rgba(18,15,13,.72) 0%,rgba(18,15,13,0) 22%,rgba(18,15,13,0) 62%,rgba(18,15,13,.86) 100%)}
 .brand{position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px) + 18px) 22px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -171,7 +173,7 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
     <div class="veil"></div>
     <header class="brand">
       <div><div class="eyebrow">Live Try-On</div><h1>착용 거울</h1></div>
-      <span class="fps" id="fps"></span>
+      <div class="right"><button class="fitbtn" type="button" id="btnFit" aria-pressed="false">화면 채우기</button><span class="fps" id="fps"></span></div>
     </header>
     <span class="badge" id="badge" hidden></span>
     <div class="msg" id="msg">
@@ -433,8 +435,7 @@ async function startCam(){
   stopCam();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ setMsg('이 브라우저에서는 카메라를 쓸 수 없어요.<br>크롬이나 사파리 최신 버전으로 https 주소에서 열어 주세요.'); return }
   setMsg('카메라를 켜는 중이에요…');
-  const portrait = innerHeight>innerWidth;
-  const res0 = MOBILE ? (portrait ? {width:{ideal:720},height:{ideal:960}} : {width:{ideal:960},height:{ideal:720}}) : {width:{ideal:960},height:{ideal:720}};
+  const res0 = {width:{ideal:960},height:{ideal:720}};
   try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,...res0,frameRate:{ideal:30,max:30}},audio:false}) }
   catch(e){ setMsg(e&&e.name==='NotAllowedError' ? '카메라 권한이 거부됐어요.<br>주소창의 카메라 아이콘에서 허용으로 바꾼 뒤 다시 눌러 주세요.' : '카메라를 찾지 못했어요.<br>다른 앱이 카메라를 쓰고 있는지 확인해 주세요.'); return }
   vid.srcObject=stream; await vid.play().catch(()=>{});
@@ -715,6 +716,9 @@ function setType(t){ type=t; smooth={}; bright={}; lastF=null; if(prevBox){ jx.c
   document.querySelectorAll('#typeSeg [data-type]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.type===t));
   $('#guide').textContent=GUIDE[t]; $('#wristField').hidden=t!=='bracelet'; if(typeof renderProducts==='function') renderProducts();
   if(stream&&!det[KIND[t]]){ setMsg('인식 모델을 불러오는 중이에요…'); getDet(KIND[t]).then(()=>setMsg('')).catch(()=>setMsg('인식 모델을 받지 못했어요. 인터넷 연결을 확인해 주세요.')) } }
+let fillMode=false; try{ fillMode=localStorage.getItem('ar-fill')==='1' }catch(e){}
+function applyFit(){ $('.mirror').classList.toggle('fill',fillMode); const b=$('#btnFit'); b.textContent=fillMode?'전체 보기':'화면 채우기'; b.setAttribute('aria-pressed',fillMode) }
+$('#btnFit').onclick=()=>{ fillMode=!fillMode; try{ localStorage.setItem('ar-fill',fillMode?'1':'0') }catch(e){} applyFit() }; applyFit();
 $('#typeSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-type]'); if(b) setType(b.dataset.type) });
 $('#btnCam').onclick=()=>{ stream?(stopCam(),setMsg('카메라를 껐어요.')):startCam() };
 $('#btnFlip').onclick=()=>{ facing = facing==='user'?'environment':'user'; smooth={}; startCam() };
