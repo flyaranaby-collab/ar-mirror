@@ -125,6 +125,10 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
 .strip .chip-d span{font:400 11px/1 var(--f-serif);letter-spacing:.06em;color:var(--ivory-2)}
 .strip .chip-add span{font:300 22px/1 var(--f-latin);color:var(--gold)}
 .upl{align-items:center}
+.ptabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #ddd3c3}
+.ptabs button{border:0;background:none;cursor:pointer;padding:12px 4px 11px;font:400 14px/1 var(--f-serif);letter-spacing:.08em;color:#8a7d6c;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;justify-content:center;align-items:baseline;gap:5px}
+.ptabs button span{font:italic 400 13px/1 var(--f-latin);color:var(--gold-lo)}
+.ptabs button[aria-selected="true"]{color:#1f1a16;border-bottom-color:var(--gold-lo)}
 .chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#6f6456;cursor:pointer}
 .chk input{accent-color:#8e7445}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
@@ -185,9 +189,9 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
       <div class="strip" id="strip" aria-label="착용할 작품"></div>
       <div class="tabs" id="typeSeg" role="group" aria-label="착용할 장신구">
         <button type="button" data-type="earring" aria-pressed="true">귀걸이</button>
+        <button type="button" data-type="ring" aria-pressed="false">반지</button>
         <button type="button" data-type="necklace" aria-pressed="false">목걸이</button>
         <button type="button" data-type="bracelet" aria-pressed="false">팔찌</button>
-        <button type="button" data-type="ring" aria-pressed="false">반지</button>
       </div>
       <div class="controls">
         <button class="ctl" type="button" id="btnFlip" disabled aria-label="앞뒤 카메라 바꾸기" title="앞/뒤 카메라"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><path d="M9.5 13.5a2.8 2.8 0 0 0 5 .8M14.5 12.5a2.8 2.8 0 0 0-5-.8"/><path d="M14.6 10.4l-.1 2.1 2-.4M9.4 15.6l.1-2.1-2 .4"/></svg></button>
@@ -209,8 +213,14 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
       <section class="sec">
         <div class="sec-h"><h2 id="prodTitle">귀걸이 작품</h2><span class="no"><span id="prodCount"></span> ii.</span></div>
         <p class="lede">직접 만든 완제품 사진을 종류별로 올려 두세요. 배경을 지우고 이 기기에 저장해서, 카메라 아래 작품 줄에서 골라 바로 착용해 볼 수 있어요.</p>
+        <div class="ptabs" id="prodTabs" role="tablist" aria-label="완제품 종류">
+          <button type="button" role="tab" data-pcat="earring">귀걸이<span></span></button>
+          <button type="button" role="tab" data-pcat="ring">반지<span></span></button>
+          <button type="button" role="tab" data-pcat="necklace">목걸이<span></span></button>
+          <button type="button" role="tab" data-pcat="bracelet">팔찌<span></span></button>
+        </div>
         <div class="row upl">
-          <label class="btn primary" for="prodFile">완제품 사진 올리기</label>
+          <label class="btn primary" for="prodFile" id="prodUpLabel">귀걸이 사진 올리기</label>
           <input type="file" id="prodFile" accept="image/*" multiple hidden>
           <input type="file" id="prodFile2" accept="image/*" multiple hidden>
           <label class="chk"><input type="checkbox" id="rmBg" checked> 배경 지우기</label>
@@ -220,7 +230,7 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
       <section class="sec">
         <div class="sec-h"><h2>착용 앨범</h2><span class="no">iii.</span></div>
         <div class="atabs" id="albumTabs">
-          <button type="button" data-acat="all" aria-pressed="true">전체</button><button type="button" data-acat="earring">귀걸이</button><button type="button" data-acat="necklace">목걸이</button><button type="button" data-acat="bracelet">팔찌</button><button type="button" data-acat="ring">반지</button>
+          <button type="button" data-acat="all" aria-pressed="true">전체</button><button type="button" data-acat="earring">귀걸이</button><button type="button" data-acat="ring">반지</button><button type="button" data-acat="necklace">목걸이</button><button type="button" data-acat="bracelet">팔찌</button>
         </div>
         <div class="agrid" id="albumGrid"></div>
       </section>
@@ -679,6 +689,8 @@ function renderStrip(){ const el=$('#strip'), list=products.filter(p=>p.cat===ty
 }
 function escH(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
 function renderProducts(){ const list=products.filter(p=>p.cat===type), act=activeProduct();
+  document.querySelectorAll('#prodTabs [data-pcat]').forEach(b=>{ const c=b.dataset.pcat, n=products.filter(p=>p.cat===c).length; b.setAttribute('aria-selected',c===type); b.querySelector('span').textContent=n?n:'' });
+  $('#prodUpLabel').textContent=`${CAT_NAME[type]} 사진 올리기`;
   $('#prodTitle').textContent=`${CAT_NAME[type]} 작품`; $('#prodCount').textContent=list.length? `${list.length}점` : '';
   $('#prodGrid').innerHTML = list.length ? list.map(p=>`<article class="pcard${act&&act.id===p.id?' on':''}" data-id="${p.id}">
       <button type="button" class="pthumb" data-wear="${p.id}" aria-label="${escH(p.name)} 착용하기"><img src="${prodURL(p)}" alt=""></button>
@@ -708,6 +720,7 @@ $('#prodGrid').addEventListener('click',async e=>{ const w=e.target.closest('[da
     if(activeProd[type]===id){ activeProd[type]=null; saveActive() } renderProducts(); toast('작품을 지웠어요.') } });
 $('#prodGrid').addEventListener('change',async e=>{ const inp=e.target.closest('[data-f]'); if(!inp) return; const id=inp.closest('[data-id]').dataset.id, p=products.find(x=>x.id===id); if(!p) return;
   const f=inp.dataset.f; p[f]= f==='name' ? inp.value.trim().slice(0,40)||'작품' : (inp.value===''?'':Number(inp.value)); await IDB.put('products',p).catch(()=>toast('저장하지 못했어요.')); renderStrip() });
+$('#prodTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-pcat]'); if(b) setType(b.dataset.pcat) });
 $('#albumTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-acat]'); if(!b) return; albumCat=b.dataset.acat; renderShots() });
 $('#albumGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-shot]'); if(!b) return; viewing=shots.find(s=>s.id===b.dataset.shot); if(!viewing) return;
   $('#vImg').src=surl[viewing.id]; const P=products.find(p=>p.id===viewing.productId);
