@@ -115,6 +115,45 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
 .ana-mat img{max-width:100%;max-height:100%}
 .ana-mat i{display:block;width:72%;height:72%;border-radius:50%}
 
+.strip{display:flex;gap:10px;overflow-x:auto;max-width:100%;padding:4px 2px;scrollbar-width:none;justify-content:safe center}
+.strip::-webkit-scrollbar{display:none}
+.strip button,.strip label{flex:none;width:50px;height:50px;border-radius:50%;border:1px solid rgba(244,239,230,.22);background:rgba(18,15,13,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:5px;cursor:pointer;display:grid;place-items:center;transition:border-color .2s,transform .2s}
+.strip img{width:100%;height:100%;object-fit:contain}
+.strip [aria-pressed="true"]{border:1.5px solid var(--gold-hi);transform:scale(1.06)}
+.strip .chip-d span{font:400 11px/1 var(--f-serif);letter-spacing:.06em;color:var(--ivory-2)}
+.strip .chip-add span{font:300 22px/1 var(--f-latin);color:var(--gold)}
+.upl{align-items:center}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#6f6456;cursor:pointer}
+.chk input{accent-color:#8e7445}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pcard{background:#fbf8f2;border:1px solid #e0d6c5;border-radius:2px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pcard.on{border-color:var(--gold-lo);box-shadow:0 0 0 1px var(--gold-lo) inset}
+.pthumb{border:0;padding:0;cursor:pointer;aspect-ratio:1;background:radial-gradient(circle at 50% 40%,#2a2420,#14110f);border-radius:2px;display:grid;place-items:center}
+.pthumb img{max-width:82%;max-height:82%;object-fit:contain}
+.pname{font:500 14px/1.3 var(--f-serif);border:0;border-bottom:1px solid transparent;background:none;padding:2px 0;color:#1f1a16;width:100%}
+.pname:focus{border-bottom-color:var(--gold-lo);outline:none}
+.pmeta{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pmeta label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;letter-spacing:.04em;color:#8a7d6c}
+.pmeta input{width:100%;padding:5px 6px;font-size:12.5px}
+.pact{display:flex;gap:6px}
+.pact .btn{flex:1;padding:8px 6px;font-size:12px;letter-spacing:.06em}
+.btn.ghost{flex:none;border-color:transparent;color:#8a7d6c}
+.btn.armed{color:#a3271f;border-color:#a3271f}
+.empty{margin:0;font-size:13px;color:#8a7d6c;line-height:1.7;padding:14px;border:1px dashed #d5c9b6;border-radius:2px;grid-column:1/-1}
+.atabs{display:flex;gap:4px;flex-wrap:wrap}
+.atabs button{border:0;background:none;padding:6px 10px;font:400 13px/1 var(--f-serif);letter-spacing:.06em;color:#8a7d6c;cursor:pointer;border-bottom:1px solid transparent}
+.atabs button[aria-pressed="true"]{color:#1f1a16;border-bottom-color:var(--gold-lo)}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.shot{border:0;padding:0;cursor:pointer;position:relative;aspect-ratio:3/4;overflow:hidden;background:#1f1a16;border-radius:2px}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot span{position:absolute;left:6px;bottom:5px;font:400 10px/1 var(--f-serif);color:var(--ivory);background:rgba(18,15,13,.6);padding:3px 6px;border-radius:999px}
+.viewer{position:fixed;inset:0;z-index:20;background:rgba(10,8,7,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.viewer figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:0;flex:1;justify-content:center;max-width:100%}
+.viewer img{max-width:100%;max-height:72vh;object-fit:contain;border:1px solid var(--line)}
+.viewer figcaption{font:400 13px/1.4 var(--f-serif);letter-spacing:.06em;color:var(--sand)}
+.vbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.vbar .btn{color:var(--ivory);border-color:var(--line)}
+.vbar .btn.armed{color:#f08077;border-color:#f08077}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 84px);transform:translateX(-50%);background:rgba(18,15,13,.88);color:var(--ivory);border:1px solid var(--line);
   padding:11px 20px;border-radius:999px;font-size:13px;letter-spacing:.03em;z-index:9;max-width:calc(100% - 32px);backdrop-filter:blur(10px)}
 .scroll-hint{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 4px);transform:translateX(-50%);font:400 10px/1 var(--f-latin);letter-spacing:.3em;color:var(--sand);opacity:.6}
@@ -141,6 +180,7 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
     </div>
     <div class="dock">
       <p class="guide" id="guide"></p>
+      <div class="strip" id="strip" aria-label="착용할 작품"></div>
       <div class="tabs" id="typeSeg" role="group" aria-label="착용할 장신구">
         <button type="button" data-type="earring" aria-pressed="true">귀걸이</button>
         <button type="button" data-type="necklace" aria-pressed="false">목걸이</button>
@@ -165,7 +205,25 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
         <div id="anaOut"></div>
       </section>
       <section class="sec">
-        <div class="sec-h"><h2>착용 맞춤</h2><span class="no">ii.</span></div>
+        <div class="sec-h"><h2 id="prodTitle">귀걸이 작품</h2><span class="no"><span id="prodCount"></span> ii.</span></div>
+        <p class="lede">직접 만든 완제품 사진을 종류별로 올려 두세요. 배경을 지우고 이 기기에 저장해서, 카메라 아래 작품 줄에서 골라 바로 착용해 볼 수 있어요.</p>
+        <div class="row upl">
+          <label class="btn primary" for="prodFile">완제품 사진 올리기</label>
+          <input type="file" id="prodFile" accept="image/*" multiple hidden>
+          <input type="file" id="prodFile2" accept="image/*" multiple hidden>
+          <label class="chk"><input type="checkbox" id="rmBg" checked> 배경 지우기</label>
+        </div>
+        <div class="pgrid" id="prodGrid"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-h"><h2>착용 앨범</h2><span class="no">iii.</span></div>
+        <div class="atabs" id="albumTabs">
+          <button type="button" data-acat="all" aria-pressed="true">전체</button><button type="button" data-acat="earring">귀걸이</button><button type="button" data-acat="necklace">목걸이</button><button type="button" data-acat="bracelet">팔찌</button><button type="button" data-acat="ring">반지</button>
+        </div>
+        <div class="agrid" id="albumGrid"></div>
+      </section>
+      <section class="sec">
+        <div class="sec-h"><h2>착용 맞춤</h2><span class="no">iv.</span></div>
         <div class="sliders">
           <div class="field"><label for="sScale">크기</label><input type="range" id="sScale" min="0.6" max="1.6" step="0.01" value="1"></div>
           <div class="field"><label for="sOff">위치 · 위아래</label><input type="range" id="sOff" min="-25" max="25" step="0.5" value="0"></div>
@@ -175,7 +233,7 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
         <div class="field" id="wristField" hidden><label for="wristIn">손목 둘레 (cm)</label><input type="number" id="wristIn" min="11" max="22" step="0.5" value="15.5"></div>
       </section>
       <section class="sec">
-        <div class="sec-h"><h2>디자인 불러오기</h2><span class="no">iii.</span></div>
+        <div class="sec-h"><h2>구슬 디자인 불러오기</h2><span class="no">v.</span></div>
         <div class="summary" id="summary"></div>
         <p class="note">디자인 보드의 <b>저장·백업 → 전체 백업 복사</b>를 누른 뒤 아래 칸에 붙여넣고 불러오세요. 한 번 불러오면 이 기기에 기억돼요.</p>
         <textarea id="paste" placeholder="여기에 백업 내용을 붙여넣으세요"></textarea>
@@ -188,6 +246,10 @@ textarea{width:100%;min-height:96px;font-size:12px;font-family:ui-monospace,Menl
   </aside>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="viewer" id="viewer" hidden>
+  <figure><img id="vImg" alt="착용 사진"><figcaption id="vCap"></figcaption></figure>
+  <div class="vbar"><button class="btn" type="button" id="btnVSave">기기에 저장</button><button class="btn" type="button" id="btnVShare">공유하기</button><button class="btn" type="button" id="btnVDel">삭제</button><button class="btn" type="button" id="btnVClose">닫기</button></div>
+</div>
 
 <script type="module">
 import {FilesetResolver, FaceLandmarker, HandLandmarker, PoseLandmarker} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
@@ -439,10 +501,12 @@ function loop(){
   for(const f0 of F){ const f=smoothF(f0.key,f0); if(!f0.vis) continue;
     if(frameNo%15===1||bright[f.key]==null) bright[f.key]=lumAt(f.x,f.y,f.s*10);
     bs+=bright[f.key]; bn++;
-    const r=reach(f); x0=Math.min(x0,f.x-r); y0=Math.min(y0,f.y-r); x1=Math.max(x1,f.x+r); y1=Math.max(y1,f.y+r*1.3);
+    const AP=activeProduct();
+    const r=AP?productReach(f,AP):reach(f); x0=Math.min(x0,f.x-r); y0=Math.min(y0,f.y-r); x1=Math.max(x1,f.x+r); y1=Math.max(y1,f.y+r*1.3);
     jx.save(); jx.translate(f.x,f.y); jx.rotate(f.ang); jx.scale(f.s,f.s);
     const o={shadow:0, bright:1};
-    if(type==='earring') drawEarring(jx,f.s,o);
+    if(AP) drawProduct(jx,AP);
+    else if(type==='earring') drawEarring(jx,f.s,o);
     else if(type==='necklace'){ jx.translate(0,18); drawNecklace(jx,f.s,o) }
     else drawAround(jx,type,f.s,o);
     jx.restore() }
@@ -553,18 +617,109 @@ $('#anaOut').addEventListener('click',e=>{ const b=e.target.closest('[data-try]'
   else D.designs.necklace={seq:lastAna.rec.neck.slice(), len:lastAna.rec.neckLen};
   D.sample=false; save(); summary(); setType(t); toast(t==='earring'?'추천 귀걸이를 달았어요.':'추천 목걸이를 걸었어요.') });
 
+/* ---------- 내 작품(완제품) · 착용 앨범 ---------- */
+const CAT_NAME={earring:'귀걸이', necklace:'목걸이', bracelet:'팔찌', ring:'반지'};
+const DEF_SIZE={earring:35, necklace:150, bracelet:68, ring:21};
+const SIZE_LABEL={earring:'길이 (mm)', necklace:'착용 폭 (mm)', bracelet:'지름 (mm)', ring:'지름 (mm)'};
+const IDB=(()=>{ let p; const open=()=>p||(p=new Promise((res,rej)=>{ const r=indexedDB.open('ar-mirror',1);
+    r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains('products')) db.createObjectStore('products',{keyPath:'id'}); if(!db.objectStoreNames.contains('shots')) db.createObjectStore('shots',{keyPath:'id'}) };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error) }));
+  const tx=async(store,mode,fn)=>{ const db=await open(); return new Promise((res,rej)=>{ const t=db.transaction(store,mode), q=fn(t.objectStore(store)); t.oncomplete=()=>res(q&&'result' in q?q.result:undefined); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error) }) };
+  return {all:s=>tx(s,'readonly',st=>st.getAll()), put:(s,v)=>tx(s,'readwrite',st=>st.put(v)), del:(s,id)=>tx(s,'readwrite',st=>st.delete(id))} })();
+let products=[], shots=[]; const purl={}, pim={}, surl={};
+let activeProd={}; try{ activeProd=JSON.parse(localStorage.getItem('ar-active')||'{}')||{} }catch(e){}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function saveActive(){ try{ localStorage.setItem('ar-active',JSON.stringify(activeProd)) }catch(e){} }
+function prodURL(p){ return purl[p.id]||(purl[p.id]=URL.createObjectURL(p.blob)) }
+function prodImg(p){ if(!pim[p.id]){ const im=new Image(); im.src=prodURL(p); pim[p.id]=im } return pim[p.id] }
+function activeProduct(){ const id=activeProd[type]; if(!id) return null; return products.find(p=>p.id===id&&p.cat===type)||null }
+function loadImgURL(u){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=u }) }
+async function processProduct(file, removeBg){
+  const u=URL.createObjectURL(file); let im; try{ im=await loadImgURL(u) } finally { setTimeout(()=>URL.revokeObjectURL(u),2000) }
+  const k=Math.min(1,1000/Math.max(im.naturalWidth,im.naturalHeight)); let c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
+  let x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(im,0,0,c.width,c.height);
+  if(removeBg){ const W=c.width,H=c.height, d=x.getImageData(0,0,W,H), p=d.data, rs=[],gs=[],bs=[];
+    const take=(xx,yy)=>{ const i=(yy*W+xx)*4; rs.push(p[i]); gs.push(p[i+1]); bs.push(p[i+2]) };
+    for(let xx=0;xx<W;xx+=3){ take(xx,0); take(xx,H-1) } for(let yy=0;yy<H;yy+=3){ take(0,yy); take(W-1,yy) }
+    const med=a=>a.sort((u,v)=>u-v)[a.length>>1], br=med(rs), bg=med(gs), bb=med(bs);
+    let x0=W,y0=H,x1=0,y1=0;
+    for(let yy=0;yy<H;yy++) for(let xx=0;xx<W;xx++){ const i=(yy*W+xx)*4, dd=Math.hypot(p[i]-br,p[i+1]-bg,p[i+2]-bb);
+      if(dd<26) p[i+3]=0; else if(dd<46) p[i+3]=Math.round(p[i+3]*(dd-26)/20);
+      if(p[i+3]>30){ if(xx<x0)x0=xx; if(xx>x1)x1=xx; if(yy<y0)y0=yy; if(yy>y1)y1=yy } }
+    x.putImageData(d,0,0);
+    if(x1>x0&&y1>y0){ const pad=4, t=document.createElement('canvas'); x0=Math.max(0,x0-pad); y0=Math.max(0,y0-pad); x1=Math.min(W-1,x1+pad); y1=Math.min(H-1,y1+pad);
+      t.width=x1-x0+1; t.height=y1-y0+1; t.getContext('2d').drawImage(c,x0,y0,t.width,t.height,0,0,t.width,t.height); c=t } }
+  return await new Promise(res=>c.toBlob(res,'image/png'));
+}
+function drawProduct(x,P){ const im=prodImg(P); if(!(im.complete&&im.naturalWidth)) return;
+  const ar=im.naturalHeight/im.naturalWidth, S=Number(P.size)||DEF_SIZE[P.cat];
+  if(type==='earring'){ const h=S, w=h/ar; x.drawImage(im,-w/2,-2,w,h); return }
+  if(type==='necklace'){ const w=S, h=w*ar; x.drawImage(im,-w/2,-6,w,h); return }
+  const w=S, h=w*ar, k=type==='bracelet'?.42:.36;
+  x.save(); x.rotate(Math.PI/2); x.scale(1,k); x.beginPath(); x.rect(-w,-h*.06,2*w,h); x.clip(); x.drawImage(im,-w/2,-h/2,w,h); x.restore() }
+function productReach(f,P){ const S=Number(P.size)||DEF_SIZE[P.cat]; return (type==='necklace'? S*1.1 : type==='earring'? S+12 : S*.7+8)*f.s }
+
+/* 화면: 카메라 아래 작품 줄 */
+function renderStrip(){ const el=$('#strip'), list=products.filter(p=>p.cat===type), act=activeProduct();
+  el.innerHTML=`<button type="button" class="chip-d" data-prod="" aria-pressed="${!act}" title="구슬 디자인"><span>디자인</span></button>`+
+    list.map(p=>`<button type="button" data-prod="${p.id}" aria-pressed="${act&&act.id===p.id}" title="${escH(p.name)}"><img src="${prodURL(p)}" alt="${escH(p.name)}"></button>`).join('')+
+    `<label class="chip-add" for="prodFile2" title="${CAT_NAME[type]} 작품 올리기"><span>＋</span></label>`;
+}
+function escH(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
+function renderProducts(){ const list=products.filter(p=>p.cat===type), act=activeProduct();
+  $('#prodTitle').textContent=`${CAT_NAME[type]} 작품`; $('#prodCount').textContent=list.length? `${list.length}점` : '';
+  $('#prodGrid').innerHTML = list.length ? list.map(p=>`<article class="pcard${act&&act.id===p.id?' on':''}" data-id="${p.id}">
+      <button type="button" class="pthumb" data-wear="${p.id}" aria-label="${escH(p.name)} 착용하기"><img src="${prodURL(p)}" alt=""></button>
+      <input class="pname" type="text" value="${escH(p.name)}" data-f="name" aria-label="작품 이름">
+      <div class="pmeta"><label>${SIZE_LABEL[p.cat]}<input type="number" min="5" max="400" step="1" value="${p.size||DEF_SIZE[p.cat]}" data-f="size"></label>
+        <label>가격 (원)<input type="number" min="0" step="1000" value="${p.price||''}" placeholder="—" data-f="price"></label></div>
+      <div class="pact"><button type="button" class="btn ${act&&act.id===p.id?'primary':''}" data-wear="${p.id}">${act&&act.id===p.id?'착용 중':'착용하기'}</button><button type="button" class="btn ghost" data-del="${p.id}">삭제</button></div>
+    </article>`).join('')
+    : `<p class="empty">아직 올린 ${CAT_NAME[type]} 작품이 없어요. 흰 배경이나 단색 배경에서 찍은 완제품 사진을 올리면 배경을 지우고 바로 착용해 볼 수 있어요.</p>`;
+  renderStrip(); }
+function renderShots(){ const list=shots.filter(s=>albumCat==='all'||s.cat===albumCat).sort((a,b)=>b.created-a.created);
+  document.querySelectorAll('#albumTabs [data-acat]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.acat===albumCat));
+  $('#albumGrid').innerHTML = list.length ? list.map(s=>`<button type="button" class="shot" data-shot="${s.id}"><img src="${surl[s.id]||(surl[s.id]=URL.createObjectURL(s.blob))}" alt="${CAT_NAME[s.cat]} 착용 사진"><span>${CAT_NAME[s.cat]}</span></button>`).join('')
+    : '<p class="empty">셔터를 누르면 착용 사진이 여기에 쌓여요. 손님에게 바로 공유할 수도 있어요.</p>'; }
+let albumCat='all', viewing=null;
+async function loadAll(){ try{ products=await IDB.all('products')||[]; shots=await IDB.all('shots')||[] }catch(e){ products=[]; shots=[]; toast('이 브라우저에서는 작품을 저장할 수 없어요. 시크릿 모드인지 확인해 주세요.') }
+  products.sort((a,b)=>a.created-b.created); renderProducts(); renderShots() }
+async function onProdFiles(files){ const rm=$('#rmBg').checked; let n=0;
+  for(const f of files){ try{ const blob=await processProduct(f,rm); const p={id:uid(), cat:type, name:(f.name||'작품').replace(/\.[a-z0-9]+$/i,'').slice(0,40), size:DEF_SIZE[type], price:'', blob, created:Date.now()};
+      await IDB.put('products',p); products.push(p); activeProd[type]=p.id; n++ }catch(e){ toast(`${f.name||'사진'}을(를) 저장하지 못했어요.`) } }
+  saveActive(); renderProducts(); if(n) toast(`${CAT_NAME[type]} 작품 ${n}점을 저장했어요. 바로 착용해 보세요.`) }
+for(const id of ['#prodFile','#prodFile2']) $(id).addEventListener('change',e=>{ const fs=[...e.target.files]; e.target.value=''; if(fs.length) onProdFiles(fs) });
+$('#strip').addEventListener('click',e=>{ const b=e.target.closest('[data-prod]'); if(!b) return; activeProd[type]=b.dataset.prod||null; saveActive(); lastF=lastF; renderProducts() });
+$('#prodGrid').addEventListener('click',async e=>{ const w=e.target.closest('[data-wear]'); if(w){ activeProd[type]= activeProd[type]===w.dataset.wear ? null : w.dataset.wear; saveActive(); renderProducts(); if(MOBILE&&activeProd[type]) $('.mirror').scrollIntoView({behavior:'smooth'}); return }
+  const d=e.target.closest('[data-del]'); if(d){ if(!d.classList.contains('armed')){ d.classList.add('armed'); d.textContent='정말 삭제'; setTimeout(()=>{ d.classList.remove('armed'); d.textContent='삭제' },3000); return }
+    const id=d.dataset.del; await IDB.del('products',id).catch(()=>{}); products=products.filter(p=>p.id!==id); if(purl[id]){ URL.revokeObjectURL(purl[id]); delete purl[id]; delete pim[id] }
+    if(activeProd[type]===id){ activeProd[type]=null; saveActive() } renderProducts(); toast('작품을 지웠어요.') } });
+$('#prodGrid').addEventListener('change',async e=>{ const inp=e.target.closest('[data-f]'); if(!inp) return; const id=inp.closest('[data-id]').dataset.id, p=products.find(x=>x.id===id); if(!p) return;
+  const f=inp.dataset.f; p[f]= f==='name' ? inp.value.trim().slice(0,40)||'작품' : (inp.value===''?'':Number(inp.value)); await IDB.put('products',p).catch(()=>toast('저장하지 못했어요.')); renderStrip() });
+$('#albumTabs').addEventListener('click',e=>{ const b=e.target.closest('[data-acat]'); if(!b) return; albumCat=b.dataset.acat; renderShots() });
+$('#albumGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-shot]'); if(!b) return; viewing=shots.find(s=>s.id===b.dataset.shot); if(!viewing) return;
+  $('#vImg').src=surl[viewing.id]; const P=products.find(p=>p.id===viewing.productId);
+  $('#vCap').textContent=`${CAT_NAME[viewing.cat]}${P?' · '+P.name:''} · ${new Date(viewing.created).toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
+  $('#btnVShare').hidden=!(navigator.canShare&&navigator.canShare({files:[new File([viewing.blob],'a.png',{type:'image/png'})]})); $('#viewer').hidden=false });
+function shotName(s){ const d=new Date(s.created), p=n=>String(n).padStart(2,'0'); return `착용_${CAT_NAME[s.cat]}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png` }
+$('#btnVSave').onclick=()=>{ if(!viewing) return; const a=document.createElement('a'); a.href=surl[viewing.id]; a.download=shotName(viewing); document.body.appendChild(a); a.click(); a.remove() };
+$('#btnVShare').onclick=async()=>{ if(!viewing) return; try{ await navigator.share({files:[new File([viewing.blob],shotName(viewing),{type:'image/png'})], title:'착용 사진'}) }catch(e){} };
+$('#btnVDel').onclick=async(e)=>{ const b=e.currentTarget; if(!viewing) return; if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='정말 삭제'; setTimeout(()=>{ b.classList.remove('armed'); b.textContent='삭제' },3000); return }
+  b.classList.remove('armed'); b.textContent='삭제'; const id=viewing.id; await IDB.del('shots',id).catch(()=>{}); shots=shots.filter(s=>s.id!==id); URL.revokeObjectURL(surl[id]); delete surl[id]; $('#viewer').hidden=true; viewing=null; renderShots(); toast('사진을 지웠어요.') };
+$('#btnVClose').onclick=()=>{ $('#viewer').hidden=true; viewing=null };
+$('#viewer').addEventListener('click',e=>{ if(e.target.id==='viewer'){ $('#viewer').hidden=true; viewing=null } });
+
 /* ---------- 화면 조작 ---------- */
 let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,3200) }
 function setType(t){ type=t; smooth={}; bright={}; lastF=null; if(prevBox){ jx.clearRect(0,0,jl.width,jl.height); prevBox=null }
   document.querySelectorAll('#typeSeg [data-type]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.type===t));
-  $('#guide').textContent=GUIDE[t]; $('#wristField').hidden=t!=='bracelet';
+  $('#guide').textContent=GUIDE[t]; $('#wristField').hidden=t!=='bracelet'; if(typeof renderProducts==='function') renderProducts();
   if(stream&&!det[KIND[t]]){ setMsg('인식 모델을 불러오는 중이에요…'); getDet(KIND[t]).then(()=>setMsg('')).catch(()=>setMsg('인식 모델을 받지 못했어요. 인터넷 연결을 확인해 주세요.')) } }
 $('#typeSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-type]'); if(b) setType(b.dataset.type) });
 $('#btnCam').onclick=()=>{ stream?(stopCam(),setMsg('카메라를 껐어요.')):startCam() };
 $('#btnFlip').onclick=()=>{ facing = facing==='user'?'environment':'user'; smooth={}; startCam() };
-$('#btnShot').onclick=()=>{ cv.toBlob(b=>{ if(!b) return; const a=document.createElement('a'), d=new Date();
-  a.href=URL.createObjectURL(b); a.download=`착용_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}.png`;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); toast('사진을 저장했어요.') },'image/png') };
+$('#btnShot').onclick=()=>{ cv.toBlob(async b=>{ if(!b) return; const AP=activeProduct(); const s={id:uid(), cat:type, productId:AP?AP.id:null, blob:b, created:Date.now()};
+  try{ await IDB.put('shots',s); shots.push(s); renderShots(); toast('착용 사진을 앨범에 담았어요.') }catch(e){ toast('앨범에 저장하지 못했어요.') } },'image/jpeg',.92) };
 for(const [id,k] of [['#sScale','scale'],['#sOff','off'],['#sShd','shd'],['#sAmb','amb']]) $(id).addEventListener('input',e=>{ opt[k]=parseFloat(e.target.value) });
 $('#wristIn').addEventListener('change',e=>{ const v=parseFloat(e.target.value); if(v>=10&&v<=25){ D.wear=D.wear||{}; D.wear.wrist=Math.round(v*10); save() } });
 function save(){ try{ localStorage.setItem(STORE,JSON.stringify(D)) }catch(e){ toast('이 브라우저에 저장하지 못했어요. 다음에 다시 불러와야 해요.') } }
@@ -576,7 +731,7 @@ $('#btnLoad').onclick=()=>{ const txt=$('#paste').value.trim(); if(!txt){ toast(
   catch(e){ toast('백업 형식이 아니에요. 디자인 보드의 ‘전체 백업 복사’ 내용을 그대로 붙여넣어 주세요.') } };
 $('#btnSample').onclick=()=>{ D=sampleState(); try{localStorage.removeItem(STORE)}catch(e){} summary(); toast('예시 디자인으로 바꿨어요.') };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&stream){ stopCam(); setMsg('화면을 벗어나서 카메라를 껐어요.<br>‘카메라 켜기’로 다시 시작하세요.') } });
-setType('earring'); summary();
+setType('earring'); summary(); loadAll();
 // 대기 화면
 (function idle(){ ctx.fillStyle='#0b0908'; ctx.fillRect(0,0,cv.width,cv.height) })();
 </script>
