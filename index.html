@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>실시간 착용 거울</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eceeeb; --surface:#fbfbfa; --surface-2:#e2e6e2; --fg:#1c2321; --muted:#5b6662; --line:#cdd3cf;
+  --accent:#94661c; --accent-soft:#f1e5cf; --accent-fg:#fff; --stage:#1a2221; --danger:#b3261e;
+  --f-display:"Gowun Batang","Nanum Myeongjo",serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#131817; --surface:#1b2220; --surface-2:#242d2b; --fg:#e5eae7; --muted:#9aa6a1; --line:#33403c;
+  --accent:#d6a650; --accent-soft:#3a2f1b; --accent-fg:#1a1306; --stage:#0d1312; --danger:#f08077; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-body);padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:16px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-display);font-size:clamp(22px,4vw,30px);margin:0}
+.top p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.layout{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:900px){.layout{grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr)}}
+.stage{position:relative;background:var(--stage);border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-width:100%;display:grid;place-items:center}
+.stage canvas{width:100%;height:100%;object-fit:contain;display:block}
+.msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8efec;text-align:center;font-size:15px;padding:16px;max-width:90%}
+.badge{position:absolute;top:10px;left:10px;font-size:12px;background:rgb(0 0 0/.5);color:#fff;padding:4px 10px;border-radius:999px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.seg{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:2px;flex-wrap:wrap}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);font:600 14px var(--f-body);padding:8px 10px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgb(0 0 0/.12)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:9px 13px;font:500 14px var(--f-body);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label,.lbl{font-size:12px;color:var(--muted);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=number],textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+input[type=number]{width:100px}
+textarea{width:100%;min-height:90px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+h2{font-size:14px;margin:0;font-weight:600}
+.note{font-size:13px;color:var(--muted);margin:0}
+.summary{font-size:13px;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ana-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ana-chips span{font-size:12px;background:var(--accent-soft);border-radius:999px;padding:3px 10px}
+.ana-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:420px){.ana-cards{grid-template-columns:1fr}}
+.ana-card{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;font-size:13px;min-width:0}
+.ana-mats{display:flex;flex-wrap:wrap;gap:4px}
+.ana-mat{width:28px;height:28px;border-radius:6px;background:var(--stage);display:grid;place-items:center;padding:3px}
+.ana-mat img{max-width:100%;max-height:100%}
+.ana-mat i{display:block;width:70%;height:70%;border-radius:50%}
+#anaOut{display:flex;flex-direction:column;gap:8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>실시간 착용 거울</h1>
+    <p>카메라가 얼굴·목·손을 인식해서, 디자인 보드에서 만든 장신구를 실제 크기 비율로 바로 착용해 보여줘요.</p>
+  </header>
+  <main class="layout">
+    <section>
+      <div class="stage" id="stage">
+        <canvas id="cv" width="1280" height="960"></canvas>
+        <video id="vid" playsinline muted hidden></video>
+        <span class="badge" id="badge" hidden></span>
+        <div class="msg" id="msg">‘카메라 켜기’를 누르면 시작해요.<br>처음에는 인식 모델을 받느라 몇 초 걸려요.</div>
+      </div>
+    </section>
+    <aside class="panel">
+      <div class="seg" id="typeSeg" role="group" aria-label="착용할 장신구">
+        <button type="button" data-type="earring" aria-pressed="true">귀걸이</button>
+        <button type="button" data-type="necklace" aria-pressed="false">목걸이</button>
+        <button type="button" data-type="bracelet" aria-pressed="false">팔찌</button>
+        <button type="button" data-type="ring" aria-pressed="false">반지</button>
+      </div>
+      <p class="note" id="guide"></p>
+      <div class="row">
+        <button class="btn primary" type="button" id="btnCam">카메라 켜기</button>
+        <button class="btn" type="button" id="btnFlip" disabled>앞/뒤 카메라</button>
+        <button class="btn" type="button" id="btnShot" disabled>사진 찍기</button>
+      </div>
+      <div class="sliders">
+        <div class="field"><label for="sScale">크기</label><input type="range" id="sScale" min="0.6" max="1.6" step="0.01" value="1"></div>
+        <div class="field"><label for="sOff">위치 (위·아래)</label><input type="range" id="sOff" min="-25" max="25" step="0.5" value="0"></div>
+        <div class="field"><label for="sShd">그림자</label><input type="range" id="sShd" min="0" max="1" step="0.02" value="0.6"></div>
+        <div class="field"><label for="sAmb">조명 맞춤</label><input type="range" id="sAmb" min="0" max="1" step="0.02" value="0.7"></div>
+      </div>
+      <h2>AI 스타일 분석</h2>
+      <p class="note">카메라 앞에서 정면을 보고 누르면 피부 톤·언더톤·얼굴형을 재서, 불러온 재료 안에서 어울리는 귀걸이·목걸이 조합을 골라 줘요. 영상은 기기 밖으로 나가지 않아요.</p>
+      <button class="btn primary" type="button" id="btnAnalyze" disabled>얼굴 분석하고 추천 받기</button>
+      <div id="anaOut"></div>
+      <div class="field" id="wristField" hidden><label for="wristIn">손목 둘레 (cm)</label><input type="number" id="wristIn" min="11" max="22" step="0.5" value="15.5"></div>
+      <h2>디자인 불러오기</h2>
+      <div class="summary" id="summary"></div>
+      <p class="note">디자인 보드의 <b>저장·백업 → 전체 백업 복사</b>를 누른 뒤, 아래 칸에 붙여넣고 불러오세요. 한 번 불러오면 이 기기에 기억돼요.</p>
+      <textarea id="paste" placeholder="여기에 백업 내용을 붙여넣으세요"></textarea>
+      <div class="row">
+        <button class="btn primary" type="button" id="btnLoad">불러오기</button>
+        <button class="btn" type="button" id="btnSample">예시 디자인으로</button>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+import {FilesetResolver, FaceLandmarker, HandLandmarker, PoseLandmarker} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
+const WASM='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
+const MODELS={
+  face:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+  hand:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+  pose:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'};
+const KIND={earring:'face', necklace:'pose', bracelet:'hand', ring:'hand'};
+const GUIDE={
+  earring:'얼굴 정면이 보이게 서 주세요. 고개를 돌리면 반대쪽 귀걸이는 가려져요.',
+  necklace:'어깨까지 화면에 들어오게 조금 떨어져 주세요. 얼굴과 양쪽 어깨가 모두 보여야 해요.',
+  bracelet:'손등이 보이게 손을 펴서 카메라에 비춰 주세요. 손목까지 화면에 들어와야 해요.',
+  ring:'손가락을 펴서 손등이 보이게 비춰 주세요. 반지는 넷째 손가락에 끼워져요.'};
+const $=s=>document.querySelector(s);
+const CHARM_ALONG=3, HOOK=16, K_TILT=.38, K_WRIST=.55, NECK_BACK=190;
+const THREADS={gold:'#c9a24a', silver:'#c5cbd0', clear:'rgba(235,245,245,.7)', black:'#151515'};
+
+function seeded(n){let s=n;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function genImage(g, w, h){
+  const k = 28, c = document.createElement('canvas');
+  c.width = Math.round(w*k); c.height = Math.round(h*k);
+  const x = c.getContext('2d'), W=c.width, H=c.height;
+  const ell = () => {x.beginPath();x.ellipse(W/2,H/2,W/2-1,H/2-1,0,0,Math.PI*2)};
+  if (g.t==='stone' || g.t==='pearl' || g.t==='ball'){
+    const cols = g.t==='pearl' ? ['#ffffff','#f2e6de','#c9b3a6'] : g.t==='ball' ? ['#fff4c8','#d9ad47','#7d5a14'] : g.c;
+    const gr = x.createRadialGradient(W*.36,H*.32,W*.04,W*.5,H*.5,W*.62);
+    gr.addColorStop(0,cols[0]);gr.addColorStop(.55,cols[1]);gr.addColorStop(1,cols[2]);
+    ell();x.fillStyle=gr;x.fill();
+    if (g.t==='stone'){const r=seeded(g.seed||7);x.save();ell();x.clip();x.globalAlpha=.22;
+      for(let i=0;i<14;i++){x.fillStyle=r()>.5?'#ffffff':cols[2];x.beginPath();x.ellipse(r()*W,r()*H,W*(.04+r()*.12),H*(.02+r()*.05),r()*3,0,7);x.fill()}x.restore()}
+    if (g.t==='pearl'){x.save();ell();x.clip();const p=x.createLinearGradient(0,0,W,H);p.addColorStop(0,'rgba(255,190,210,.25)');p.addColorStop(1,'rgba(170,200,255,.2)');x.fillStyle=p;x.fillRect(0,0,W,H);x.restore()}
+    x.fillStyle='rgba(255,255,255,.75)';x.beginPath();x.ellipse(W*.34,H*.3,W*.11,H*.07,-.6,0,7);x.fill();
+  } else if (g.t==='disc'){
+    const gr=x.createLinearGradient(0,0,W,0);gr.addColorStop(0,'#7d5a14');gr.addColorStop(.45,'#fbe6a2');gr.addColorStop(1,'#8c661b');
+    x.fillStyle=gr;x.beginPath();x.roundRect(1,0,W-2,H,W*.35);x.fill();
+  } else if (g.t==='crystal'){
+    const gr=x.createLinearGradient(0,0,W,H);gr.addColorStop(0,'#eef8ff');gr.addColorStop(.5,'#9fc7e8');gr.addColorStop(1,'#4f7fa8');
+    x.fillStyle=gr;x.beginPath();x.moveTo(W*.18,0);x.lineTo(W*.82,0);x.lineTo(W,H*.25);x.lineTo(W,H*.75);x.lineTo(W*.82,H);x.lineTo(W*.18,H);x.lineTo(0,H*.75);x.lineTo(0,H*.25);x.closePath();x.fill();
+    x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=W*.04;
+    for(const yy of [.25,.5,.75]){x.beginPath();x.moveTo(0,H*yy);x.lineTo(W,H*yy);x.stroke()}
+    x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,H);x.stroke();
+  } else if (g.t==='heart'){
+    const gr=x.createLinearGradient(0,0,W,H);gr.addColorStop(0,'#fff0b8');gr.addColorStop(.5,'#d8aa44');gr.addColorStop(1,'#7a5512');
+    x.fillStyle=gr;const top=H*.28;
+    x.beginPath();x.moveTo(W/2,H*.98);
+    x.bezierCurveTo(W*.05,H*.68,W*-.02,top,W*.26,top);x.bezierCurveTo(W*.42,top,W*.5,top+H*.08,W/2,top+H*.14);
+    x.bezierCurveTo(W*.5,top+H*.08,W*.58,top,W*.74,top);x.bezierCurveTo(W*1.02,top,W*.95,H*.68,W/2,H*.98);x.fill();
+    x.strokeStyle='#c39a3e';x.lineWidth=W*.07;x.beginPath();x.arc(W/2,H*.13,H*.09,0,7);x.stroke();
+  }
+  return c.toDataURL('image/png');
+}
+function samples(){
+  return [
+    {id:'s-rose', name:'로즈쿼츠 8mm', kind:'bead', w:8, h:8, stock:40, price:300, sample:true, gen:{t:'stone',c:['#fbe0e3','#e7a3ad','#b06c78'],seed:3}},
+    {id:'s-amaz', name:'아마조나이트 6mm', kind:'bead', w:6, h:6, stock:60, price:200, sample:true, gen:{t:'stone',c:['#dcf3ee','#86c4b8','#4a8a80'],seed:11}},
+    {id:'s-pearl', name:'담수진주 7mm', kind:'bead', w:7, h:7, stock:30, price:500, sample:true, gen:{t:'pearl'}},
+    {id:'s-disc', name:'골드 디스크 스페이서 4×2', kind:'bead', w:2, h:4, stock:100, price:50, sample:true, gen:{t:'disc'}},
+    {id:'s-ball', name:'14K 볼 3mm', kind:'bead', w:3, h:3, stock:80, price:150, sample:true, gen:{t:'ball'}},
+    {id:'s-cry', name:'크리스탈 론델 6×4', kind:'bead', w:4, h:6, stock:50, price:120, sample:true, gen:{t:'crystal'}},
+    {id:'s-heart', name:'하트 참 10×12', kind:'charm', w:10, h:12, stock:10, price:800, sample:true, gen:{t:'heart'}}
+  ];
+}
+
+
+/* ---------- 디자인 데이터 ---------- */
+const STORE='ar-mirror-design-v1';
+function fillSeq(pattern, mats, L){ const out=[]; let U=0, i=0;
+  while(i<4000){ const m=mats.find(x=>x.id===pattern[i%pattern.length]); if(!m) break; const a=m.kind==='charm'?CHARM_ALONG:m.w; if(U+a>L+.01) break; out.push(m.id); U+=a; i++ } return out }
+function sampleState(){
+  const mats=samples();
+  const half=['s-ball','s-pearl','s-ball','s-cry','s-ball','s-pearl','s-disc','s-rose','s-disc'];
+  return {thread:'gold', materials:mats, wear:{wrist:155}, designs:{
+    bracelet:{seq:fillSeq(['s-rose','s-ball','s-amaz','s-ball'],mats,170), len:170},
+    necklace:{seq:half.concat(['s-heart'],half.slice().reverse()), len:450},
+    earring:{seq:['s-ball','s-cry','s-ball','s-pearl','s-heart'], len:40},
+    ring:{seq:fillSeq(['s-amaz','s-ball'],mats,70), size:12}}, sample:true};
+}
+let D=null;
+try{ const r=localStorage.getItem(STORE); if(r) D=JSON.parse(r) }catch(e){}
+if(!D||!D.materials||!D.designs) D=sampleState();
+let type='earring';
+const imgs={};
+function matById(id){ return D.materials.find(m=>m.id===id) }
+function imgOf(m){ const key=m.id+(m.img?m.img.length:'')+JSON.stringify(m.gen||'')+m.w+'x'+m.h;
+  if(imgs[key]) return imgs[key]; let src=m.img||null; if(!src&&m.gen){ try{ src=genImage(m.gen,m.w,m.h) }catch(e){} }
+  if(!src) return imgs[key]=null; const im=new Image(); im.src=src; return imgs[key]=im }
+function colorOf(m){ if(m.color) return m.color; let h=0; for(const ch of m.name||'x') h=(h*31+ch.charCodeAt(0))%360; return `hsl(${h} 45% 66%)` }
+function alongOf(m){ return m.kind==='charm'?CHARM_ALONG:m.w }
+function ringInner(size){ return 40+Number(size||12) }
+function maxH(seq){ let h=3; for(const id of seq){const m=matById(id); if(m&&m.kind!=='charm') h=Math.max(h,m.h)} return h }
+function lenOf(t){ const d=D.designs[t]; if(t==='ring') return ringInner(d.size)+Math.PI*Math.max(2,maxH(d.seq)); return d.len }
+function items(t){ const d=D.designs[t]||{seq:[]}, out=[]; let U=0;
+  for(const id of d.seq){ const m=matById(id); if(!m) continue; const a=alongOf(m); out.push({m,a}); U+=a }
+  const L=lenOf(t); let s = t==='earring' ? 0 : (t==='necklace' ? (L-U)/2 : L/2-U/2);
+  for(const it of out){ it.s=s+it.a/2; s+=it.a } return {list:out,U,L} }
+function summary(){ const n=t=>(D.designs[t]&&D.designs[t].seq.length)||0;
+  $('#summary').textContent=(D.sample?'예시 디자인 · ':'불러온 디자인 · ')+`귀걸이 ${n('earring')}알 · 목걸이 ${n('necklace')}알 · 팔찌 ${n('bracelet')}알 · 반지 ${n('ring')}알`;
+  $('#wristIn').value=((D.wear&&D.wear.wrist)||155)/10 }
+
+/* ---------- 기하 ---------- */
+function perim(a,b){ return Math.PI*(3*(a+b)-Math.sqrt((3*a+b)*(a+3*b))) }
+function ellGeom(A,B){ const N=360, pts=[], cum=[0];
+  for(let i=0;i<=N;i++){ const f=2*Math.PI*i/N; pts.push([A*Math.cos(f),B*Math.sin(f)]); if(i) cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1])) }
+  const P=cum[N];
+  return {P,pts,at(u){ u=((u%P)+P)%P; let lo=0,hi=N; while(hi-lo>1){const m=(lo+hi)>>1; if(cum[m]<=u) lo=m; else hi=m}
+    const t=(u-cum[lo])/((cum[hi]-cum[lo])||1);
+    return {y:pts[lo][0]+(pts[hi][0]-pts[lo][0])*t, z:pts[lo][1]+(pts[hi][1]-pts[lo][1])*t, ty:pts[hi][0]-pts[lo][0], tz:pts[hi][1]-pts[lo][1]} }} }
+function aroundGeom(t){
+  if(t==='bracelet'){ const wc=(D.wear&&D.wear.wrist)||155, L=lenOf('bracelet'), hm=maxH(D.designs.bracelet.seq), A0=wc/perim(1,.72), B0=A0*.72, cl=Math.max((L-wc)/(2*Math.PI),hm/2);
+    return {L, half:A0, k:K_WRIST, geom:ellGeom(A0+cl,B0+cl)} }
+  const L=lenOf('ring'), R=L/(2*Math.PI); return {L, half:ringInner(D.designs.ring.size)/Math.PI/2, k:K_TILT, geom:ellGeom(R,R)} }
+function aroundList(t,g){ const {list}=items(t), f=g.geom.P/g.L;
+  return list.map(it=>{ const pt=g.geom.at(g.geom.P/4+(it.s-g.L/2)*f), x=-g.k*pt.z, y=pt.y;
+    return {m:it.m,x,y,z:pt.z,rot:Math.atan2(pt.ty,-g.k*pt.tz),hang:Math.atan2(y,x)} }).sort((a,b)=>a.z-b.z) }
+function drapeGeom(Lf){
+  const half=b=>{ const P=[[-48,-18],[-82,-18+.36*b],[-60,b],[0,b]], pts=[];
+    for(let i=0;i<=60;i++){ const t=i/60,u=1-t,k=[u*u*u,3*u*u*t,3*u*t*t,t*t*t]; pts.push([k.reduce((s,v,j)=>s+v*P[j][0],0),k.reduce((s,v,j)=>s+v*P[j][1],0)]) } return pts };
+  const len=p=>p.reduce((s,q,i)=>i?s+Math.hypot(q[0]-p[i-1][0],q[1]-p[i-1][1]):0,0);
+  let lo=-15,hi=600; for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(2*len(half(m))<Lf) lo=m; else hi=m }
+  const h=half(lo), pts=h.concat(h.slice(0,-1).reverse().map(p=>[-p[0],p[1]])), cum=[0];
+  for(let i=1;i<pts.length;i++) cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+  const P=cum[cum.length-1];
+  return {P,pts,at(u){ let a=0,b=pts.length-1; while(b-a>1){const m=(a+b)>>1; if(cum[m]<=u) a=m; else b=m}
+    const t=(u-cum[a])/((cum[b]-cum[a])||1), p=pts[a], q=pts[b]; return {x:p[0]+(q[0]-p[0])*t, y:p[1]+(q[1]-p[1])*t, a:Math.atan2(q[1]-p[1],q[0]-p[0])} }} }
+
+/* ---------- 그리기 ---------- */
+function drawMat(ctx,m,w,h){ const im=imgOf(m);
+  if(im&&im.complete&&im.naturalWidth){ const ir=im.naturalWidth/im.naturalHeight, br=w/h; let sw=im.naturalWidth, sh=im.naturalHeight, sx=0, sy=0;
+    if(ir>br){ sw=sh*br; sx=(im.naturalWidth-sw)/2 } else { sh=sw/br; sy=(im.naturalHeight-sh)/2 }
+    ctx.drawImage(im,sx,sy,sw,sh,-w/2,-h/2,w,h) }
+  else { ctx.fillStyle=colorOf(m); ctx.beginPath(); ctx.ellipse(0,0,w/2,h/2,0,0,Math.PI*2); ctx.fill() } }
+function threadCol(){ return THREADS[D.thread]||THREADS.gold }
+function drawItems(ctx,list,px,o){
+  for(const it of list){ const m=it.m; ctx.save();
+    if(o.shadow>0){ ctx.shadowColor=`rgba(40,22,12,${(.55*o.shadow).toFixed(3)})`; ctx.shadowBlur=(1.2+2.2*o.shadow)*px; ctx.shadowOffsetY=(.5+1.4*o.shadow)*px }
+    const br=(o.dim?.6:1)*(o.bright||1); if(br!==1) ctx.filter=`brightness(${br.toFixed(3)})`;
+    ctx.translate(it.x,it.y);
+    if(m.kind==='charm'){ ctx.rotate(it.hang-Math.PI/2); ctx.strokeStyle=threadCol(); ctx.lineWidth=.45; ctx.beginPath(); ctx.arc(0,1,1,0,7); ctx.stroke(); ctx.translate(0,1.8+m.h/2); drawMat(ctx,m,m.w,m.h) }
+    else { ctx.rotate(it.rot); drawMat(ctx,m,m.w,m.h) }
+    ctx.restore() } }
+function line(ctx,pts,w,px,shadow){ ctx.save(); ctx.strokeStyle=threadCol(); ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round';
+  if(shadow>0){ ctx.shadowColor=`rgba(40,22,12,${(.45*shadow).toFixed(3)})`; ctx.shadowBlur=1.4*px; ctx.shadowOffsetY=.8*px }
+  ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.restore() }
+function drawAround(ctx,t,px,o){ const g=aroundGeom(t), list=aroundList(t,g);
+  drawItems(ctx,list.filter(i=>i.z<0&&Math.abs(i.y)-i.m.h*.25>g.half),px,{...o,dim:true,shadow:0});
+  const front=g.geom.pts.filter(p=>p[1]>=0).map(p=>[-g.k*p[1],p[0]]); line(ctx,front,.8,px,o.shadow);
+  drawItems(ctx,list.filter(i=>i.z>=0),px,o) }
+function drawNecklace(ctx,px,o){ const {list,L}=items('necklace'), Lf=Math.max(100,L-NECK_BACK), g=drapeGeom(Lf);
+  line(ctx,g.pts,.9,px,o.shadow);
+  const arr=[]; for(const it of list){ const u=Lf/2+(it.s-L/2); if(u<0||u>g.P) continue; const p=g.at(u); arr.push({m:it.m,x:p.x,y:p.y,rot:p.a,hang:Math.PI/2}) }
+  drawItems(ctx,arr,px,o) }
+function drawEarring(ctx,px,o){ const {list,U}=items('earring');
+  line(ctx,[[.6,-2.5],[1.6,0],[1.4,2.5],[0,4.5],[0,4.5+U]],.75,px,o.shadow);
+  drawItems(ctx,list.map(it=>({m:it.m,x:0,y:4.5+it.s,rot:Math.PI/2,hang:Math.PI/2})),px,o) }
+
+/* ---------- 인식 ---------- */
+let vision=null; const det={}, loading={};
+async function getDet(kind){
+  if(det[kind]) return det[kind]; if(loading[kind]) return loading[kind];
+  return loading[kind]=(async()=>{
+    vision ||= await FilesetResolver.forVisionTasks(WASM);
+    const mk=delegate=>{ const baseOptions={modelAssetPath:MODELS[kind], delegate};
+      if(kind==='face') return FaceLandmarker.createFromOptions(vision,{baseOptions,runningMode:'VIDEO',numFaces:1});
+      if(kind==='hand') return HandLandmarker.createFromOptions(vision,{baseOptions,runningMode:'VIDEO',numHands:1});
+      return PoseLandmarker.createFromOptions(vision,{baseOptions,runningMode:'VIDEO',numPoses:1}) };
+    try{ det[kind]=await mk('GPU') }catch(e){ det[kind]=await mk('CPU') }
+    return det[kind] })();
+}
+
+/* ---------- 카메라 ---------- */
+const vid=$('#vid'), cv=$('#cv'), ctx=cv.getContext('2d',{willReadFrequently:true});
+let stream=null, facing='user', mirror=true, raf=0, lastTs=-1, smooth={}, frameNo=0, bright={}, lost=0;
+const opt={scale:1,off:0,shd:.6,amb:.7};
+function setMsg(t){ const m=$('#msg'); m.hidden=!t; if(t) m.innerHTML=t }
+async function startCam(){
+  stopCam();
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ setMsg('이 브라우저에서는 카메라를 쓸 수 없어요.<br>크롬이나 사파리 최신 버전으로 https 주소에서 열어 주세요.'); return }
+  setMsg('카메라를 켜는 중이에요…');
+  try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:960}},audio:false}) }
+  catch(e){ setMsg(e&&e.name==='NotAllowedError' ? '카메라 권한이 거부됐어요.<br>주소창의 카메라 아이콘에서 허용으로 바꾼 뒤 다시 눌러 주세요.' : '카메라를 찾지 못했어요.<br>다른 앱이 카메라를 쓰고 있는지 확인해 주세요.'); return }
+  vid.srcObject=stream; await vid.play().catch(()=>{});
+  mirror = facing==='user';
+  $('#btnCam').textContent='카메라 끄기'; $('#btnFlip').disabled=false; $('#btnShot').disabled=false; $('#btnAnalyze').disabled=false;
+  setMsg('인식 모델을 불러오는 중이에요… (처음 한 번만 몇 초 걸려요)');
+  getDet(KIND[type]).then(()=>{ if(stream) setMsg('') }).catch(()=>setMsg('인식 모델을 받지 못했어요.<br>인터넷 연결을 확인하고 다시 켜 주세요.'));
+  cancelAnimationFrame(raf); loop();
+}
+function stopCam(){ cancelAnimationFrame(raf); if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null }
+  $('#btnCam').textContent='카메라 켜기'; $('#btnFlip').disabled=true; $('#btnShot').disabled=true; $('#btnAnalyze').disabled=true; $('#badge').hidden=true }
+const lerp=(a,b,t)=>a+(b-a)*t;
+function lerpAng(a,b,t){ let d=b-a; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI; return a+d*t }
+function smoothF(key,f){ const p=smooth[key]; if(!p||Math.hypot(p.x-f.x,p.y-f.y)>f.s*80){ smooth[key]={...f}; return smooth[key] }
+  const k=.5; p.x=lerp(p.x,f.x,k); p.y=lerp(p.y,f.y,k); p.s=lerp(p.s,f.s,k); p.ang=lerpAng(p.ang,f.ang,k); p.vis=f.vis; return p }
+function lumAt(x,y,r){ try{ const R=Math.max(4,Math.round(r)), d=ctx.getImageData(Math.round(x-R),Math.round(y-R),2*R,2*R).data; let s=0,n=0;
+  for(let i=0;i<d.length;i+=16){ s+=(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])/255; n++ } return n?s/n:.6 }catch(e){ return .6 } }
+function frames(res,W,H){
+  const P=(lm)=>({x:(mirror?1-lm.x:lm.x)*W, y:lm.y*H, v:lm.visibility==null?1:lm.visibility});
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  if(type==='earring'){ const f=res.faceLandmarks&&res.faceLandmarks[0]; if(!f) return null;
+    const L=P(f[234]), R=P(f[454]), top=P(f[10]), chin=P(f[152]), nose=P(f[1]); const wpx=dist(L,R), s=wpx/140*opt.scale;
+    const dl=Math.hypot(chin.x-top.x,chin.y-top.y)||1, down={x:(chin.x-top.x)/dl, y:(chin.y-top.y)/dl}, mid={x:(L.x+R.x)/2,y:(L.y+R.y)/2};
+    return [L,R].map((E,i)=>{ const ol=Math.hypot(E.x-mid.x,E.y-mid.y)||1, out={x:(E.x-mid.x)/ol,y:(E.y-mid.y)/ol};
+      return {key:'e'+i, x:E.x+down.x*(24+opt.off)*s+out.x*3*s, y:E.y+down.y*(24+opt.off)*s+out.y*3*s, ang:0, s, vis: dist(nose,E)>wpx*.28} }) }
+  if(type==='necklace'){ const p=res.landmarks&&res.landmarks[0]; if(!p) return null;
+    let a=P(p[11]), b=P(p[12]); if(a.v<.4||b.v<.4) return null; if(a.x>b.x) [a,b]=[b,a];
+    const m1=P(p[9]), m2=P(p[10]), M={x:(a.x+b.x)/2,y:(a.y+b.y)/2}, Q={x:(m1.x+m2.x)/2,y:(m1.y+m2.y)/2};
+    const sh=dist(a,b), s=sh/350*opt.scale, ql=Math.hypot(Q.x-M.x,Q.y-M.y)||1, up={x:(Q.x-M.x)/ql,y:(Q.y-M.y)/ql};
+    return [{key:'n', x:M.x+up.x*(sh*.12-opt.off*s), y:M.y+up.y*(sh*.12-opt.off*s), ang:Math.atan2(b.y-a.y,b.x-a.x), s, vis:true}] }
+  const h=res.landmarks&&res.landmarks[0]; if(!h) return null;
+  const p0=P(h[0]), p5=P(h[5]), p9=P(h[9]), p13=P(h[13]), p14=P(h[14]), p17=P(h[17]);
+  const s=dist(p5,p17)/68*opt.scale;
+  if(type==='bracelet'){ const dl=dist(p9,p0)||1, dir={x:(p9.x-p0.x)/dl,y:(p9.y-p0.y)/dl}, back=12+opt.off;
+    return [{key:'b', x:p0.x-dir.x*back*s, y:p0.y-dir.y*back*s, ang:Math.atan2(dir.y,dir.x), s, vis:true}] }
+  const dl=dist(p14,p13)||1, dir={x:(p14.x-p13.x)/dl,y:(p14.y-p13.y)/dl};
+  return [{key:'r', x:p13.x+(p14.x-p13.x)*.4+dir.x*opt.off*s, y:p13.y+(p14.y-p13.y)*.4+dir.y*opt.off*s, ang:Math.atan2(dir.y,dir.x), s, vis:true}] }
+function loop(){
+  raf=requestAnimationFrame(loop);
+  if(!stream||vid.readyState<2) return;
+  const W=vid.videoWidth, H=vid.videoHeight; if(!W) return;
+  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; $('#stage').style.aspectRatio=W+'/'+H }
+  ctx.setTransform(1,0,0,1,0,0); ctx.filter='none';
+  if(mirror){ ctx.translate(W,0); ctx.scale(-1,1) } ctx.drawImage(vid,0,0,W,H); ctx.setTransform(1,0,0,1,0,0);
+  const d=det[KIND[type]]; if(!d) return;
+  let ts=performance.now(); if(ts<=lastTs) ts=lastTs+1; lastTs=ts;
+  let res; try{ res=d.detectForVideo(vid,ts) }catch(e){ return }
+  const F=frames(res,W,H); frameNo++;
+  const badge=$('#badge');
+  if(!F){ lost++; if(lost>12){ badge.hidden=false; badge.textContent=type==='necklace'?'어깨와 얼굴이 보이게 해 주세요':type==='earring'?'얼굴을 찾고 있어요':'손을 찾고 있어요' } return }
+  lost=0; badge.hidden=true;
+  for(const f0 of F){ const f=smoothF(f0.key,f0); if(!f0.vis) continue;
+    if(frameNo%10===1||bright[f.key]==null){ const l=lumAt(f.x,f.y,f.s*10); bright[f.key]=l }
+    const b=1+opt.amb*(Math.max(.5,Math.min(1.35,bright[f.key]/.6))-1);
+    const o={shadow:opt.shd, bright:b}, px=f.s;
+    ctx.save(); ctx.translate(f.x,f.y); ctx.rotate(f.ang); ctx.scale(f.s,f.s);
+    if(type==='earring') drawEarring(ctx,px,o);
+    else if(type==='necklace'){ ctx.translate(0,18); drawNecklace(ctx,px,o) }
+    else drawAround(ctx,type,px,o);
+    ctx.restore() }
+}
+
+/* ---------- AI 스타일 분석 (기기 안에서 계산) ---------- */
+function srgb2lab(r,g,b){ const f=c=>{c/=255; return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4)};
+  let R=f(r),G=f(g),B=f(b); let X=(R*.4124+G*.3576+B*.1805)/.95047, Y=(R*.2126+G*.7152+B*.0722), Z=(R*.0193+G*.1192+B*.9505)/1.08883;
+  const h=t=>t>.008856?Math.cbrt(t):7.787*t+16/116; const fx=h(X), fy=h(Y), fz=h(Z); return {L:116*fy-16, a:500*(fx-fy), b:200*(fy-fz)} }
+const off=document.createElement('canvas'), offx=off.getContext('2d',{willReadFrequently:true});
+function measureFace(f){
+  const W=vid.videoWidth, H=vid.videoHeight, k=360/W; off.width=360; off.height=Math.round(H*k); offx.drawImage(vid,0,0,off.width,off.height);
+  const pt=i=>({x:f[i].x*off.width, y:f[i].y*off.height}), d=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const cheekW=d(pt(234),pt(454)), r=Math.max(2,Math.round(cheekW*.035)), labs=[];
+  for(const i of [50,280,101,330,205,425]){ const p=pt(i); let img; try{ img=offx.getImageData(Math.round(p.x-r),Math.round(p.y-r),2*r,2*r).data }catch(e){ continue }
+    for(let j=0;j<img.length;j+=4) labs.push(srgb2lab(img[j],img[j+1],img[j+2])) }
+  if(!labs.length) return null;
+  labs.sort((u,v)=>u.L-v.L); const mid=labs.slice(Math.floor(labs.length*.2),Math.ceil(labs.length*.8));
+  const av=mid.reduce((s,x)=>({L:s.L+x.L,a:s.a+x.a,b:s.b+x.b}),{L:0,a:0,b:0}); av.L/=mid.length; av.a/=mid.length; av.b/=mid.length;
+  const P=i=>({x:f[i].x*W, y:f[i].y*H}), D2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  const cw=D2(P(234),P(454));
+  return {L:av.L, a:av.a, b:av.b, R:D2(P(10),P(152))/cw, jaw:D2(P(172),P(397))/cw, fore:D2(P(54),P(284))/cw} }
+function classify(m){
+  const hue=(Math.atan2(m.b,m.a)*180/Math.PI+360)%360;
+  const tone = m.L>=68?'밝은 톤':m.L>=55?'중간 톤':'깊은 톤';
+  const under = hue>=58?'웜':hue<=49?'쿨':'뉴트럴';
+  let shape='계란형';
+  if(m.R>1.45) shape='긴 얼굴형'; else if(m.jaw>.9&&m.R<1.36) shape='각진 얼굴형'; else if(m.R<1.3&&m.jaw>.8) shape='둥근 얼굴형'; else if(m.fore-m.jaw>.12) shape='하트형';
+  return {tone, under, shape, hue} }
+const SHAPE_TIP={
+  '둥근 얼굴형':{ear:'세로로 길게 떨어지는 드롭 귀걸이가 얼굴을 갈름하게 보여줘요.', T:40, neck:50, neckTip:'50cm 정도로 V자로 떨어지는 길이가 잘 어울려요.'},
+  '긴 얼굴형':{ear:'짧고 둥근 귀걸이로 옆 볼륨을 주는 게 좋아요.', T:14, neck:40, neckTip:'40cm 쇄골 길이나 초커가 균형을 잡아 줘요.'},
+  '각진 얼굴형':{ear:'둥근 알과 곡선 장식으로 턱선을 부드럽게 해 주세요.', T:28, neck:45, neckTip:'45cm 둥근 곡선 목걸이가 잘 어울려요.'},
+  '하트형':{ear:'아래쪽이 풍성한 물방울형 드롭이 턱 쪽을 채워 줘요.', T:30, neck:42, neckTip:'42cm 쇄골 위 짧은 목걸이가 잘 어울려요.'},
+  '계란형':{ear:'어떤 모양이든 잘 어울려요. 중간 길이 드롭을 먼저 대 보세요.', T:26, neck:45, neckTip:'45cm 기본 길이부터 대 보세요.'}};
+const UNDER_TIP={'웜':{metal:'골드·로즈골드', color:'코랄, 피치, 앰버, 올리브, 아이보리 진주'}, '쿨':{metal:'실버·화이트골드', color:'블루, 라벤더, 로즈핑크, 에메랄드, 화이트 진주'}, '뉴트럴':{metal:'골드와 실버 모두', color:'진주, 로즈쿼츠, 부드러운 파스텔'}};
+const labCache={};
+function matLab(m){ const im=imgOf(m), key=m.id+(m.img?m.img.length:'')+m.w; if(labCache[key]) return labCache[key];
+  if(!(im&&im.complete&&im.naturalWidth)) return {L:65,a:5,b:10};
+  const c=document.createElement('canvas'); c.width=c.height=16; const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(im,0,0,16,16);
+  const p=x.getImageData(0,0,16,16).data; let r=0,g=0,b=0,w=0; for(let i=0;i<p.length;i+=4){ const a=p[i+3]/255; r+=p[i]*a; g+=p[i+1]*a; b+=p[i+2]*a; w+=a }
+  return labCache[key]= w>.5 ? srgb2lab(r/w,g/w,b/w) : {L:65,a:5,b:10} }
+function matProfile(m){ const lab=matLab(m), C=Math.hypot(lab.a,lab.b), h=(Math.atan2(lab.b,lab.a)*180/Math.PI+360)%360, n=(m.name||'').toLowerCase();
+  let metal=null; if(/골드|14k|18k|gold|금도금/.test(n)) metal='gold'; else if(/실버|silver|925|로듐/.test(n)) metal='silver';
+  const pearl=/진주|pearl/.test(n);
+  let temp='neutral'; if(metal==='gold') temp='warm'; else if(metal==='silver') temp='cool'; else if(!pearl&&C>12){ temp = h>=25&&h<110 ? 'warm' : h>=150&&h<320 ? 'cool' : 'pink' }
+  return {lab,C,metal,pearl,temp, small: m.kind!=='charm' && Math.max(m.w,m.h)<=4.5} }
+function scoreMat(p,c,L){ const t=p.temp, u=c.under; let s=0;
+  if(u==='웜') s+= t==='warm'?3 : t==='neutral'?2 : t==='pink'?1 : 0;
+  else if(u==='쿨') s+= t==='cool'?3 : t==='pink'?2.5 : t==='neutral'?2 : 0;
+  else s+= 2 + (p.metal||p.pearl?0.5:0);
+  if(L>=68 && p.lab.L>60) s+=1; if(L<55 && (p.C>25||p.metal==='gold')) s+=1; if(p.pearl&&L>=60) s+=.5;
+  return s }
+function buildRecs(c,L){
+  const ranked=D.materials.map(m=>({m,p:matProfile(m)})).map(x=>({...x,s:scoreMat(x.p,c,L)})).sort((a,b)=>b.s-a.s);
+  const metals=ranked.filter(x=>x.m.kind!=='charm'&&(x.p.metal||x.p.small)), mains=ranked.filter(x=>x.m.kind!=='charm'&&!x.p.metal&&!x.p.small), charms=ranked.filter(x=>x.m.kind==='charm');
+  const met=metals[0]&&metals[0].m.id, m1=(mains[0]||metals[0]||{}).m, m2=(mains[1]||mains[0]||{}).m, ch=charms[0]&&charms[0].s>=2?charms[0].m.id:null;
+  const tip=SHAPE_TIP[c.shape]; const ids=a=>a.filter(Boolean);
+  let ear;
+  if(c.shape==='긴 얼굴형') ear=ids([met, m1&&m1.id]);
+  else if(c.shape==='둥근 얼굴형') ear=ids([met, m1&&m1.id, met, m2&&m2.id, met, ch]);
+  else if(c.shape==='하트형') ear=ids([met, m2&&m2.id, met, m1&&m1.id, ch]);
+  else if(c.shape==='각진 얼굴형') ear=ids([met, m1&&m1.id, met, ch]);
+  else ear=ids([met, m1&&m1.id, met, m2&&m2.id]);
+  const visLen=seq=>seq.reduce((s,id)=>{const m=matById(id); return s+(m? (m.kind==='charm'? CHARM_ALONG+m.h : m.w):0)},0);
+  while(ear.length>1 && visLen(ear)>tip.T+4){ const ci=ear.findIndex(id=>matById(id).kind==='charm'); ear.splice(ci>=0&&ear.length-1!==ci?ear.length-1:Math.max(0,ear.length-2),1) }
+  const half=ids([met, m2&&m2.id, met, m1&&m1.id, met]);
+  const neck=half.concat(ch?[ch]:(m1?[m1.id]:[]), half.slice().reverse());
+  return {ear, neck, neckLen:tip.neck*10, top:ranked.slice(0,4).map(x=>x.m)} }
+let lastAna=null;
+async function analyze(){
+  if(!stream) return; const btn=$('#btnAnalyze'), out=$('#anaOut'); btn.disabled=true;
+  out.innerHTML='<p class="note">얼굴을 재고 있어요… 1~2초만 정면을 봐 주세요.</p>';
+  let fd; try{ fd=await getDet('face') }catch(e){ out.innerHTML='<p class="note">얼굴 인식 모델을 받지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; btn.disabled=false; return }
+  const acc=[];
+  for(let i=0;i<60&&acc.length<12;i++){ await new Promise(r=>requestAnimationFrame(r)); if(!stream||vid.readyState<2) continue;
+    let ts=performance.now(); if(ts<=lastTs) ts=lastTs+1; lastTs=ts; let res; try{ res=fd.detectForVideo(vid,ts) }catch(e){ continue }
+    const f=res.faceLandmarks&&res.faceLandmarks[0]; if(!f) continue; const m=measureFace(f); if(m) acc.push(m) }
+  btn.disabled=!stream;
+  if(acc.length<4){ out.innerHTML='<p class="note">얼굴을 찾지 못했어요. 밝은 곳에서 얼굴 정면이 화면 가운데 오게 하고 다시 눌러 주세요.</p>'; return }
+  const avg={}; for(const k of ['L','a','b','R','jaw','fore']) avg[k]=acc.reduce((s,x)=>s+x[k],0)/acc.length;
+  const c=classify(avg), rec=buildRecs(c,avg.L), tip=SHAPE_TIP[c.shape], ut=UNDER_TIP[c.under];
+  lastAna={c,rec};
+  const thumbs=seq=>[...new Set(seq)].map(id=>{const m=matById(id), im=imgOf(m); return `<span class="ana-mat" title="${m.name}">${im?`<img src="${im.src}" alt="">`:`<i style="background:${colorOf(m)}"></i>`}</span>`}).join('');
+  out.innerHTML=`<div class="ana-chips"><span><b>피부</b> ${c.tone}</span><span><b>언더톤</b> ${c.under}</span><span><b>얼굴형</b> ${c.shape}</span></div>
+    <p class="note">${ut.metal} 금속과 ${ut.color} 계열이 잘 어울려요. ${tip.ear} 목걸이는 ${tip.neckTip}</p>
+    <div class="ana-cards">
+      <div class="ana-card"><b>추천 귀걸이</b><div class="ana-mats">${thumbs(rec.ear)}</div><button class="btn primary" type="button" data-try="earring" ${rec.ear.length?'':'disabled'}>귀걸이 착용해 보기</button></div>
+      <div class="ana-card"><b>추천 목걸이 · ${rec.neckLen/10}cm</b><div class="ana-mats">${thumbs(rec.neck)}</div><button class="btn primary" type="button" data-try="necklace" ${rec.neck.length?'':'disabled'}>목걸이 착용해 보기</button></div>
+    </div>
+    <p class="note">조명이 노랗거나 푸르면 언더톤 결과가 달라질 수 있어요. 자연광에서 재면 가장 정확해요. 착용해 보기를 누르면 이 기기에 저장된 해당 디자인이 추천 조합으로 바뀌어요.</p>`;
+}
+$('#btnAnalyze').onclick=analyze;
+$('#anaOut').addEventListener('click',e=>{ const b=e.target.closest('[data-try]'); if(!b||!lastAna) return; const t=b.dataset.try;
+  if(t==='earring'){ const L=lastAna.rec.ear.reduce((s,id)=>s+alongOf(matById(id)),0); D.designs.earring={seq:lastAna.rec.ear.slice(), len:Math.max(20,Math.ceil(L+5))} }
+  else D.designs.necklace={seq:lastAna.rec.neck.slice(), len:lastAna.rec.neckLen};
+  D.sample=false; save(); summary(); setType(t); toast(t==='earring'?'추천 귀걸이를 달았어요.':'추천 목걸이를 걸었어요.') });
+
+/* ---------- 화면 조작 ---------- */
+let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(tt); tt=setTimeout(()=>el.hidden=true,3200) }
+function setType(t){ type=t; smooth={}; bright={};
+  document.querySelectorAll('#typeSeg [data-type]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.type===t));
+  $('#guide').textContent=GUIDE[t]; $('#wristField').hidden=t!=='bracelet';
+  if(stream&&!det[KIND[t]]){ setMsg('인식 모델을 불러오는 중이에요…'); getDet(KIND[t]).then(()=>setMsg('')).catch(()=>setMsg('인식 모델을 받지 못했어요. 인터넷 연결을 확인해 주세요.')) } }
+$('#typeSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-type]'); if(b) setType(b.dataset.type) });
+$('#btnCam').onclick=()=>{ stream?(stopCam(),setMsg('카메라를 껐어요.')):startCam() };
+$('#btnFlip').onclick=()=>{ facing = facing==='user'?'environment':'user'; smooth={}; startCam() };
+$('#btnShot').onclick=()=>{ cv.toBlob(b=>{ if(!b) return; const a=document.createElement('a'), d=new Date();
+  a.href=URL.createObjectURL(b); a.download=`착용_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}.png`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); toast('사진을 저장했어요.') },'image/png') };
+for(const [id,k] of [['#sScale','scale'],['#sOff','off'],['#sShd','shd'],['#sAmb','amb']]) $(id).addEventListener('input',e=>{ opt[k]=parseFloat(e.target.value) });
+$('#wristIn').addEventListener('change',e=>{ const v=parseFloat(e.target.value); if(v>=10&&v<=25){ D.wear=D.wear||{}; D.wear.wrist=Math.round(v*10); save() } });
+function save(){ try{ localStorage.setItem(STORE,JSON.stringify(D)) }catch(e){ toast('이 브라우저에 저장하지 못했어요. 다음에 다시 불러와야 해요.') } }
+$('#btnLoad').onclick=()=>{ const txt=$('#paste').value.trim(); if(!txt){ toast('디자인 보드에서 복사한 백업을 먼저 붙여넣어 주세요.'); return }
+  try{ const s=JSON.parse(txt); if(!s.materials||!s.designs) throw 0;
+    D={thread:s.thread||'gold', materials:s.materials, designs:s.designs, wear:{wrist:(s.wear&&s.wear.wrist)||155}};
+    for(const t of ['earring','necklace','bracelet','ring']) if(!D.designs[t]) D.designs[t]=sampleState().designs[t];
+    save(); summary(); $('#paste').value=''; toast('디자인을 불러왔어요.') }
+  catch(e){ toast('백업 형식이 아니에요. 디자인 보드의 ‘전체 백업 복사’ 내용을 그대로 붙여넣어 주세요.') } };
+$('#btnSample').onclick=()=>{ D=sampleState(); try{localStorage.removeItem(STORE)}catch(e){} summary(); toast('예시 디자인으로 바꿨어요.') };
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&stream){ stopCam(); setMsg('화면을 벗어나서 카메라를 껐어요.<br>‘카메라 켜기’로 다시 시작하세요.') } });
+setType('earring'); summary();
+// 대기 화면
+(function idle(){ ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--stage')||'#1a2221'; ctx.fillRect(0,0,cv.width,cv.height) })();
+</script>
+</body>
+</html>
